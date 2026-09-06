@@ -1,0 +1,43 @@
+services:
+  gateway:
+    build:
+      context: ./backend/Gateway
+    ports:
+      - "5000:5000"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Jwt__Key: ${JWT_KEY:?Set JWT_KEY in .env}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+      HomeAssistant__BaseUrl: ${HOME_ASSISTANT_BASE_URL:-http://homeassistant.local:8123}
+      HomeAssistant__LongLivedToken: ${HOME_ASSISTANT_TOKEN:-}
+    networks:
+      - portfolio-network
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - gateway
+    networks:
+      - portfolio-network
+
+  # Routes public traffic in from Cloudflare without opening any inbound ports on this host.
+  # Public hostnames -> http://frontend:80 / http://gateway:5000 are configured in the Cloudflare
+  # Zero Trust dashboard for this tunnel token, not here.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?Set CLOUDFLARE_TUNNEL_TOKEN in .env}
+    depends_on:
+      - frontend
+      - gateway
+    networks:
+      - portfolio-network
+    restart: unless-stopped
+
+networks:
+  portfolio-network:
+    driver: bridge

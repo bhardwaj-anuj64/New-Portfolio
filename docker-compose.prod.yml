@@ -1,0 +1,42 @@
+services:
+  gateway:
+    image: ghcr.io/${GHCR_NAMESPACE}/gateway:latest
+    ports:
+      - "5000:5000"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Jwt__Key: ${JWT_KEY:?Set JWT_KEY in .env}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env, e.g. https://anujb.dev}
+      HomeAssistant__BaseUrl: ${HOME_ASSISTANT_BASE_URL:-http://homeassistant.local:8123}
+      HomeAssistant__LongLivedToken: ${HOME_ASSISTANT_TOKEN:-}
+    networks:
+      - portfolio-network
+    restart: unless-stopped
+
+  frontend:
+    image: ghcr.io/${GHCR_NAMESPACE}/frontend:latest
+    ports:
+      - "8080:80"
+    depends_on:
+      - gateway
+    networks:
+      - portfolio-network
+    restart: unless-stopped
+
+  # Public hostnames -> http://frontend:80 / http://gateway:5000 are configured in the Cloudflare
+  # Zero Trust dashboard for this tunnel token, not here.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?Set CLOUDFLARE_TUNNEL_TOKEN in .env}
+    depends_on:
+      - frontend
+      - gateway
+    networks:
+      - portfolio-network
+    restart: unless-stopped
+
+networks:
+  portfolio-network:
+    driver: bridge
