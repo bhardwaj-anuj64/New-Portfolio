@@ -18,7 +18,8 @@ Revisit this in full during the "content filling" pass, before going live.
 - [ ] `ProjectShowcase.tsx` — repo/demo links for all 3 professional projects.
 - [ ] `MakerProjects.tsx` — repo/demo links for all 3 tinkering projects.
 - [ ] `AdminPortalModal.tsx` (`AdminDashboard`) — "Home Assistant dashboard" link.
-- [ ] `Hero.tsx` (`ProfileRing`) — no `public/profile.jpg` exists yet; falls back to "AB" initials. Drop a real headshot in.
+- [x] `Hero.tsx` (`ProfileRing`) — real headshot in at `frontend/public/profile.webp`.
+- [x] `Hero.tsx` — real resume in at `frontend/public/resume.pdf`.
 
 ## Fabricated content — needs a real pass, not just links
 
@@ -39,6 +40,10 @@ Everything below reads as specific, plausible professional content, but it was w
 - [ ] `JobQueueService.cs` → the "3D Mesh Generator" tool in the Microservice Playground **ignores the image you upload** and generates a random procedural heightmap instead. The UI looks fully functional; the backend doesn't actually process depth maps yet.
 
 The homelab server (`portfolio-docker` VM on Proxmox) now exists and is live at `anujb.dev`, so these four are no longer blocked on infrastructure — the remaining work is wiring the code itself to real Docker/Proxmox metrics, or relabeling this section as illustrative.
+
+## Site analytics
+
+- [x] `AnalyticsController.cs` / `AnalyticsService.cs` — real page-view counter, resume-download counter, and a capped (50-entry) client-error log, persisted to `data/site-stats.json` in the same volume as push subscriptions. Wired into the admin dashboard (`AdminPortalModal.tsx` → `SiteAnalytics`). No third-party analytics service used — in line with the homelab/self-hosted approach.
 
 ## Deploy pipeline
 

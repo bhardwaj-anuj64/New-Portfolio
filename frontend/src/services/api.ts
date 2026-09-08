@@ -1,4 +1,5 @@
 import type {
+  AnalyticsStatsResponse,
   ContactResponse,
   HealthResponse,
   OtpChallengeResponse,
@@ -77,6 +78,28 @@ export const createStlJob = async (
 }
 
 export const stlResultUrl = (jobId: string) => `${API_BASE_URL}/api/jobs/stl/${jobId}`
+
+// Fire-and-forget: analytics must never break the page it's measuring.
+function beacon(path: string, body?: unknown): void {
+  void fetch(`${API_BASE_URL}${path}`, {
+    method: 'POST',
+    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  }).catch(() => {})
+}
+
+export const recordPageView = (): void => beacon('/api/analytics/pageview')
+
+export const recordResumeDownload = (): void => beacon('/api/analytics/resume-download')
+
+export const reportClientError = (message: string, source?: string): void =>
+  beacon('/api/analytics/error', { message, source })
+
+export const getAnalyticsStats = (token: string) =>
+  fetch(`${API_BASE_URL}/api/analytics/stats`, { headers: { Authorization: `Bearer ${token}` } }).then((res) => {
+    if (!res.ok) throw new Error(`GET /api/analytics/stats failed: ${res.status}`)
+    return res.json() as Promise<AnalyticsStatsResponse>
+  })
 
 export const submitContactForm = async (payload: {
   name: string

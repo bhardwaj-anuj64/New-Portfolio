@@ -17,6 +17,7 @@ builder.Services.AddSignalR();
 builder.Services.AddSingleton<IWebPushService, WebPushService>();
 builder.Services.AddSingleton<IEmailService, EmailService>();
 builder.Services.AddSingleton<IJobQueueService, JobQueueService>();
+builder.Services.AddSingleton<IAnalyticsService, AnalyticsService>();
 
 // Docker/production origins arrive as a single comma-separated ALLOWED_ORIGINS env var (arrays
 // don't map cleanly onto env vars); appsettings' Cors:AllowedOrigins is the local-dev fallback.

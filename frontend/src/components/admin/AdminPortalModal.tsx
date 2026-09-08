@@ -1,10 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { BellRing, Box, ExternalLink, LogOut, Server, X } from 'lucide-react'
+import { BarChart3, BellRing, Box, ExternalLink, LogOut, Server, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { generateOtpChallenge, verifyOtpChallenge } from '../../services/api'
+import { generateOtpChallenge, getAnalyticsStats, verifyOtpChallenge } from '../../services/api'
 import { registerDevicePush } from '../../services/pushSubscription'
 import { useAdminStore } from '../../store/useAdminStore'
-import type { DockerContainerStatus, OtpChallengeResponse, ServerNodeStatus } from '../../types'
+import type { AnalyticsStatsResponse, DockerContainerStatus, OtpChallengeResponse, ServerNodeStatus } from '../../types'
 import { AdminMatrixCanvas } from './AdminMatrixCanvas'
 
 const NODES: ServerNodeStatus[] = [
@@ -181,6 +181,55 @@ function OtpGate() {
   )
 }
 
+function SiteAnalytics() {
+  const token = useAdminStore((s) => s.token)
+  const [stats, setStats] = useState<AnalyticsStatsResponse | null>(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    if (!token) return
+    getAnalyticsStats(token)
+      .then(setStats)
+      .catch(() => setFailed(true))
+  }, [token])
+
+  return (
+    <div className="flex flex-col gap-3">
+      <h3 className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-white/50">
+        <BarChart3 className="h-3.5 w-3.5" /> Site Analytics
+      </h3>
+      {failed && <p className="text-xs text-red-400">Could not load analytics.</p>}
+      {stats && (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+              <p className="text-2xl font-semibold text-white">{stats.pageViews}</p>
+              <p className="text-xs text-white/50">Page views</p>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+              <p className="text-2xl font-semibold text-white">{stats.resumeDownloads}</p>
+              <p className="text-xs text-white/50">Resume downloads</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs text-white/40">Recent errors</span>
+            {stats.recentErrors.length === 0 ? (
+              <p className="text-xs text-white/40">None recorded.</p>
+            ) : (
+              stats.recentErrors.slice(0, 5).map((error, i) => (
+                <div key={i} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs">
+                  <p className="truncate text-red-400">{error.message}</p>
+                  <p className="text-white/30">{new Date(error.timestamp).toLocaleString()}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 function AdminDashboard() {
   const logout = useAdminStore((s) => s.logout)
   const token = useAdminStore((s) => s.token)
@@ -197,7 +246,9 @@ function AdminDashboard() {
 
   return (
     <>
-      <div className="grid gap-6 sm:grid-cols-2">
+      <SiteAnalytics />
+
+      <div className="mt-6 grid gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-3">
           <h3 className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-white/50">
             <Server className="h-3.5 w-3.5" /> Server Nodes

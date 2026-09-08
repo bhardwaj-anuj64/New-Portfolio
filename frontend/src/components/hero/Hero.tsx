@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { useState } from 'react'
+import { recordResumeDownload } from '../../services/api'
 import { SocialLink } from '../common/SocialLink'
 import { HeroCanvasBackground } from './HeroCanvasBackground'
 import { RoleBadge } from './RoleBadge'
@@ -26,9 +27,8 @@ function ProfileRing() {
             AB
           </div>
         ) : (
-          // Drop a real headshot at public/profile.jpg — falls back to initials until then.
           <img
-            src="/profile.jpg"
+            src="/profile.webp"
             alt="Anuj Bhardwaj"
             onError={() => setImgError(true)}
             className="h-full w-full object-cover"
@@ -119,6 +119,15 @@ export function Hero() {
           >
             Contact
           </button>
+          {/* Drop a real file at public/resume.pdf — see LAUNCH_CHECKLIST.md */}
+          <a
+            href="/resume.pdf"
+            download
+            onClick={() => recordResumeDownload()}
+            className="rounded-full border border-white/15 bg-white/5 px-6 py-2.5 text-sm font-medium text-white backdrop-blur-md transition-colors hover:bg-white/10"
+          >
+            Resume
+          </a>
         </motion.div>
 
         <motion.div

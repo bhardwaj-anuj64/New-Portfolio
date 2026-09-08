@@ -102,6 +102,18 @@ export interface ContactResponse {
   message: string
 }
 
+export interface ErrorLogEntry {
+  timestamp: string
+  message: string
+  source: string | null
+}
+
+export interface AnalyticsStatsResponse {
+  pageViews: number
+  resumeDownloads: number
+  recentErrors: ErrorLogEntry[]
+}
+
 export interface QualificationMilestone {
   id: string
   type: 'degree' | 'certification'
