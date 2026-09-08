@@ -28,7 +28,10 @@ export async function registerDevicePush(token: string): Promise<{ ok: boolean; 
     return { ok: false, message: 'Notification permission was denied.' }
   }
 
-  const registration = await navigator.serviceWorker.register('/sw.js')
+  // register() resolves once the registration exists, not once the worker is active —
+  // subscribe() needs an active worker, so wait on serviceWorker.ready instead.
+  await navigator.serviceWorker.register('/sw.js')
+  const registration = await navigator.serviceWorker.ready
   const subscription = await registration.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,

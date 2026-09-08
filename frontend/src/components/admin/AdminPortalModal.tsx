@@ -240,8 +240,13 @@ function AdminDashboard() {
     if (!token) return
     setRegistering(true)
     setPushStatus(null)
-    setPushStatus(await registerDevicePush(token))
-    setRegistering(false)
+    try {
+      setPushStatus(await registerDevicePush(token))
+    } catch (err) {
+      setPushStatus({ ok: false, message: err instanceof Error ? err.message : 'Registration failed.' })
+    } finally {
+      setRegistering(false)
+    }
   }
 
   return (
