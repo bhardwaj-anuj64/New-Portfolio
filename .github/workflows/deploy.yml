@@ -48,13 +48,19 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      sha_tag: ${{ steps.vars.outputs.sha_tag }}
     steps:
       - uses: actions/checkout@v7
 
       # ghcr.io rejects uppercase image paths; github.repository can contain uppercase.
-      - name: Compute image namespace
+      # sha_tag is computed here (not left to metadata-action's type=sha) so the deploy job
+      # can pull this exact, immutable tag instead of racing the mutable :latest tag.
+      - name: Compute image namespace and tag
         id: vars
-        run: echo "namespace=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "namespace=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+          echo "sha_tag=sha-${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GHCR
         uses: docker/login-action@v4
@@ -73,7 +79,7 @@ jobs:
           images: ghcr.io/${{ steps.vars.outputs.namespace }}/frontend
           tags: |
             type=raw,value=latest
-            type=sha
+            type=raw,value=${{ steps.vars.outputs.sha_tag }}
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v7
@@ -92,7 +98,7 @@ jobs:
           images: ghcr.io/${{ steps.vars.outputs.namespace }}/gateway
           tags: |
             type=raw,value=latest
-            type=sha
+            type=raw,value=${{ steps.vars.outputs.sha_tag }}
 
       - name: Build and push gateway image
         uses: docker/build-push-action@v7
@@ -104,25 +110,20 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # Disabled until the home server is set up (SSH access, docker-compose.prod.yml + .env in
-  # place, and the SERVER_HOST/SERVER_USER/SSH_PRIVATE_KEY/GHCR_PAT secrets configured).
-  # Un-comment this job once that's ready.
-  # deploy:
-  #   needs: publish
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     # Pulls the :latest tag just published above and restarts the stack. Assumes
-  #     # ~/app/docker-compose.prod.yml and its .env already exist on the server (this step
-  #     # only refreshes images, it doesn't sync repo files there).
-  #     - name: Deploy via SSH
-  #       uses: appleboy/ssh-action@v1.2.5
-  #       with:
-  #         host: ${{ secrets.SERVER_HOST }}
-  #         username: ${{ secrets.SERVER_USER }}
-  #         key: ${{ secrets.SSH_PRIVATE_KEY }}
-  #         passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
-  #         script: |
-  #           cd ~/app
-  #           echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-  #           docker compose -f docker-compose.prod.yml pull
-  #           docker compose -f docker-compose.prod.yml up -d --remove-orphans
+  # Runs on a self-hosted runner living on the home server itself (registered there, not
+  # reachable from GitHub's cloud runners — the server sits behind NAT with no port forward).
+  # The runner polls GitHub outbound, so no inbound access or SSH secrets are needed.
+  # Requires GHCR_PAT (a PAT with read:packages) as a repo secret, and
+  # ~/app/docker-compose.prod.yml + .env already present on the runner host.
+  deploy:
+    needs: publish
+    runs-on: self-hosted
+    steps:
+      - name: Pull and restart via Docker Compose
+        working-directory: /home/deploy/app
+        env:
+          IMAGE_TAG: ${{ needs.publish.outputs.sha_tag }}
+        run: |
+          echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker compose -f docker-compose.prod.yml pull
+          docker compose -f docker-compose.prod.yml up -d --remove-orphans
