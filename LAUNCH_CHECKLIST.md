@@ -6,10 +6,10 @@ Revisit this in full during the "content filling" pass, before going live.
 
 ## Secrets & config (currently empty placeholders)
 
-- [ ] `backend/Gateway/appsettings.json` → `Jwt:Key` — placeholder text `REPLACE_WITH_A_LONG_RANDOM_SECRET_VIA_ENV_VAR_OR_USER_SECRETS`. Set via `dotnet user-secrets` locally, `JWT_KEY` env var in prod (already wired in `docker-compose.prod.yml`).
-- [ ] `Smtp:User` / `Smtp:AppPassword` — empty. Needs a Gmail address + [app password](https://myaccount.google.com/apppasswords). Until set, contact form submissions only log to the console (`EmailService.cs`).
-- [ ] `WebPush:VapidPublicKey` / `VapidPrivateKey` — empty. Generate via `WebPush.VapidHelper.GenerateVapidKeys()`. Until set, admin OTPs only log to the console (`WebPushService.cs`) — functionally fine, just not the "real" push-notification flow.
-- [ ] `HomeAssistant:BaseUrl` / `LongLivedToken` — empty. Blocked on the homelab server actually existing (see memory: `mock_telemetry_temporary`). Not urgent — site works fine without it, the Home Assistant proxy just 502s until configured.
+- [x] `backend/Gateway/appsettings.json` → `Jwt:Key` — set via `JWT_KEY` in the homelab server's `.env` (`~/app/.env` on `portfolio-docker`). `appsettings.json` itself still carries the placeholder text for local dev; set via `dotnet user-secrets` there if needed.
+- [x] `Smtp:User` / `Smtp:AppPassword` — set via a Gmail app password in the server's `.env`. Contact form now sends real email instead of logging to console.
+- [x] `WebPush:VapidPublicKey` / `VapidPrivateKey` — generated and set in the server's `.env`.
+- [ ] `HomeAssistant:BaseUrl` / `LongLivedToken` — empty. The homelab server now exists (`portfolio-docker` VM on Proxmox), so this is no longer blocked on infrastructure — just needs an actual Home Assistant instance set up and a long-lived token issued. Not urgent — site works fine without it, the Home Assistant proxy just 502s until configured.
 
 ## Placeholder links (all currently `href="#"`)
 
@@ -38,7 +38,12 @@ Everything below reads as specific, plausible professional content, but it was w
 - [ ] `SystemsLab.tsx` / `AdminPortalModal.tsx` — the `NODES` arrays (`proxmox-01`, `nas-truenas`, `k3s-worker-2`) are 100% hardcoded, not wired to any backend at all. Same for `AdminDashboard`'s `CONTAINERS` array (`portfolio-api`, `postgres`, `traefik`, ...).
 - [ ] `JobQueueService.cs` → the "3D Mesh Generator" tool in the Microservice Playground **ignores the image you upload** and generates a random procedural heightmap instead. The UI looks fully functional; the backend doesn't actually process depth maps yet.
 
-All four of the above are blocked on the same thing: the homelab server not being set up yet (see memory `mock_telemetry_temporary`). Once that migration happens, this section either gets wired to real metrics or gets relabeled as illustrative.
+The homelab server (`portfolio-docker` VM on Proxmox) now exists and is live at `anujb.dev`, so these four are no longer blocked on infrastructure — the remaining work is wiring the code itself to real Docker/Proxmox metrics, or relabeling this section as illustrative.
+
+## Deploy pipeline
+
+- [x] `.github/workflows/deploy.yml` → `deploy:` job — was disabled/commented out pending the homelab server. Now live: a self-hosted GitHub Actions runner on `portfolio-docker` (behind NAT, no port forwarding) pulls sha-tagged images and redeploys via Docker Compose on every push to `main`. Public traffic reaches it through a Cloudflare Tunnel (`anujb.dev` → frontend, `/api/*` → gateway).
+- [ ] No post-deploy health check — the `deploy` job restarts containers but doesn't verify they came up healthy afterward. Add a curl/health-endpoint check as a follow-up step.
 
 ## Site metadata (missing, not just placeholder)
 
