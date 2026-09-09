@@ -1,6 +1,6 @@
 services:
   gateway:
-    image: ghcr.io/${GHCR_NAMESPACE}/gateway:latest
+    image: ghcr.io/${GHCR_NAMESPACE}/gateway:${IMAGE_TAG:-latest}
     ports:
       - "5000:5000"
     environment:
@@ -9,12 +9,21 @@ services:
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env, e.g. https://anujb.dev}
       HomeAssistant__BaseUrl: ${HOME_ASSISTANT_BASE_URL:-http://homeassistant.local:8123}
       HomeAssistant__LongLivedToken: ${HOME_ASSISTANT_TOKEN:-}
+      WebPush__VapidSubject: ${VAPID_SUBJECT:-mailto:bhardwaj.anuj64@gmail.com}
+      WebPush__VapidPublicKey: ${VAPID_PUBLIC_KEY:-}
+      WebPush__VapidPrivateKey: ${VAPID_PRIVATE_KEY:-}
+      Smtp__User: ${SMTP_USER:-}
+      Smtp__AppPassword: ${SMTP_APP_PASSWORD:-}
+    volumes:
+      # Persists push subscriptions across redeploys — everything else in the gateway is
+      # deliberately in-memory (OTP challenges are 60s-lived, job results are transient).
+      - gateway-data:/app/data
     networks:
       - portfolio-network
     restart: unless-stopped
 
   frontend:
-    image: ghcr.io/${GHCR_NAMESPACE}/frontend:latest
+    image: ghcr.io/${GHCR_NAMESPACE}/frontend:${IMAGE_TAG:-latest}
     ports:
       - "8080:80"
     depends_on:
@@ -40,3 +49,6 @@ services:
 networks:
   portfolio-network:
     driver: bridge
+
+volumes:
+  gateway-data:

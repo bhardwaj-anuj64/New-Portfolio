@@ -14,7 +14,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHttpForwarder();
 builder.Services.AddSignalR();
 
-builder.Services.AddSingleton<IMathPuzzleService, MathPuzzleService>();
+builder.Services.AddSingleton<IWebPushService, WebPushService>();
+builder.Services.AddSingleton<IEmailService, EmailService>();
 builder.Services.AddSingleton<IJobQueueService, JobQueueService>();
 
 // Docker/production origins arrive as a single comma-separated ALLOWED_ORIGINS env var (arrays

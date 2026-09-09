@@ -1,12 +1,16 @@
 import type {
-  ChallengeResponse,
+  ContactResponse,
   HealthResponse,
+  OtpChallengeResponse,
   StlJobAccepted,
   TelemetryResponse,
   VerifyResponse,
 } from '../types'
 
-export const API_BASE_URL = import.meta.env.DEV ? 'http://localhost:5000' : ''
+// Always relative — the Vite dev server proxies /api and /hubs to the local backend (see
+// vite.config.ts), and production serves both from the same origin. This also means the app
+// works when reached from another device on the LAN (e.g. a phone), not just localhost.
+export const API_BASE_URL = ''
 
 async function getJson<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`)
@@ -20,25 +24,41 @@ export const getHealth = () => getJson<HealthResponse>('/api/system/health')
 
 export const getTelemetry = () => getJson<TelemetryResponse>('/api/system/telemetry')
 
-export const requestAdminChallenge = async (): Promise<ChallengeResponse> => {
-  const res = await fetch(`${API_BASE_URL}/api/admin/challenge`, { method: 'POST' })
+export const generateOtpChallenge = async (): Promise<OtpChallengeResponse> => {
+  const res = await fetch(`${API_BASE_URL}/api/admin/challenge/generate`, { method: 'POST' })
   if (!res.ok) {
-    throw new Error(`POST /api/admin/challenge failed: ${res.status}`)
+    throw new Error(`POST /api/admin/challenge/generate failed: ${res.status}`)
   }
-  return res.json() as Promise<ChallengeResponse>
+  return res.json() as Promise<OtpChallengeResponse>
 }
 
-export const verifyAdminChallenge = async (
-  challengeId: string,
-  answer: number,
-): Promise<VerifyResponse> => {
-  const res = await fetch(`${API_BASE_URL}/api/admin/verify`, {
+export const verifyOtpChallenge = async (challengeId: string, code: string): Promise<VerifyResponse> => {
+  const res = await fetch(`${API_BASE_URL}/api/admin/challenge/verify`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ challengeId, answer }),
+    body: JSON.stringify({ challengeId, code }),
   })
   // 401 carries a meaningful { success: false } body here, so parse regardless of status.
   return res.json() as Promise<VerifyResponse>
+}
+
+export const getVapidPublicKey = async (): Promise<string | null> => {
+  const res = await fetch(`${API_BASE_URL}/api/admin/challenge/vapid-public-key`)
+  if (!res.ok) return null
+  const { publicKey } = (await res.json()) as { publicKey: string }
+  return publicKey
+}
+
+export const subscribeDevicePush = async (
+  token: string,
+  subscription: { endpoint: string; p256dh: string; auth: string },
+): Promise<boolean> => {
+  const res = await fetch(`${API_BASE_URL}/api/admin/challenge/subscribe`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(subscription),
+  })
+  return res.ok
 }
 
 export const createStlJob = async (
@@ -57,3 +77,20 @@ export const createStlJob = async (
 }
 
 export const stlResultUrl = (jobId: string) => `${API_BASE_URL}/api/jobs/stl/${jobId}`
+
+export const submitContactForm = async (payload: {
+  name: string
+  email: string
+  message: string
+  website?: string
+}): Promise<ContactResponse> => {
+  const res = await fetch(`${API_BASE_URL}/api/contact`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    throw new Error(`POST /api/contact failed: ${res.status}`)
+  }
+  return res.json() as Promise<ContactResponse>
+}

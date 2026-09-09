@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 
-const ROLES = ['Developer', 'Tinkerer', 'Systems Builder', 'Car Enthusiast']
+const ROLES = ['Application Development Analyst', 'Full-Stack Engineer', 'Hardware & Systems Tinkerer']
 
 export function RoleBadge() {
   const [index, setIndex] = useState(0)

@@ -2,15 +2,6 @@
 
 This repository contains a custom full-stack portfolio application for Anuj Bhardwaj (anujb.dev). The project replaces rigid templates with a bespoke, high-performance architecture showcasing modern web development, UI/UX interaction, and robust backend engineering.
 
-## Tech Stack & Architecture
-
-- **Monorepo Structure:**
-  - `/frontend`: React Single Page Application (SPA) bundled via Vite.
-  - `/backend`: Modern .NET Web API (.NET 8/9).
-  - `/docker`: Local and production containerization via `docker-compose.yml`.
-- **Frontend Technologies:** React, Vite, Tailwind CSS, Framer Motion (for smooth transitions, card tilts, and subtle animations), and a lightweight Canvas/Three.js integration for background 3D accents.
-- **Backend Technologies:** C# .NET Web API, structured REST endpoints, secure CORS policy, and robust input validation/sanitization.
-
 ## Core Architectural Guidelines
 
 1. **Pragmatic & Minimalist (YAGNI):** 
@@ -22,18 +13,9 @@ This repository contains a custom full-stack portfolio application for Anuj Bhar
 4. **Clean Code & Modularity:** 
    - Keep components small, decoupled, and reusable. Follow clean separation of concerns between UI layers, state logic, and API communication.
 
-## Common Development Commands
+## Launch Checklist
 
-- **Frontend (`/frontend`):**
-  - Install dependencies: `npm install`
-  - Run local dev server: `npm run dev`
-  - Build for production: `npm run build`
-- **Backend (`/backend`):**
-  - Run API locally: `dotnet run`
-  - Restore packages: `dotnet restore`
-- **Docker Orchestration (Root):**
-  - Build and start containers: `docker compose up --build`
-  - Tear down containers: `docker compose down`
+`LAUNCH_CHECKLIST.md` at the repo root tracks every mock service, placeholder link, unset secret, and fabricated content item in the codebase. Whenever you introduce a new placeholder (fake data, a `href="#"`, an empty config key, invented copy standing in for real content), add it there. When one gets resolved with real content/config, check it off. Don't let this list drift out of sync with the code.
 
 ## Response Style for Claude
 

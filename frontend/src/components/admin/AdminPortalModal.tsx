@@ -1,9 +1,11 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Box, ExternalLink, LogOut, Server, X } from 'lucide-react'
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { requestAdminChallenge, verifyAdminChallenge } from '../../services/api'
+import { BellRing, Box, ExternalLink, LogOut, Server, X } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { generateOtpChallenge, verifyOtpChallenge } from '../../services/api'
+import { registerDevicePush } from '../../services/pushSubscription'
 import { useAdminStore } from '../../store/useAdminStore'
-import type { ChallengeResponse, DockerContainerStatus, ServerNodeStatus } from '../../types'
+import type { DockerContainerStatus, OtpChallengeResponse, ServerNodeStatus } from '../../types'
+import { AdminMatrixCanvas } from './AdminMatrixCanvas'
 
 const NODES: ServerNodeStatus[] = [
   { name: 'proxmox-01', status: 'online', cpu: 18, memory: 42 },
@@ -27,74 +29,171 @@ const dotColor: Record<string, string> = {
   stopped: 'bg-red-400',
 }
 
-function ChallengeGate() {
+type DispatchStatus = 'idle' | 'dispatching' | 'success' | 'error'
+
+function OtpGate() {
   const setAuthenticated = useAdminStore((s) => s.setAuthenticated)
-  const [challenge, setChallenge] = useState<ChallengeResponse | null>(null)
-  const [answer, setAnswer] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
+  const [challenge, setChallenge] = useState<OtpChallengeResponse | null>(null)
+  const [linkError, setLinkError] = useState(false)
+  const [code, setCode] = useState('')
+  const [remaining, setRemaining] = useState(0)
+  const [dispatch, setDispatch] = useState<DispatchStatus>('idle')
+  const [shake, setShake] = useState(false)
 
   const loadChallenge = useCallback(() => {
-    setAnswer('')
-    requestAdminChallenge()
+    setCode('')
+    setDispatch('idle')
+    setLinkError(false)
+    setChallenge(null)
+    generateOtpChallenge()
       .then(setChallenge)
-      .catch(() => setError('Could not reach the gateway.'))
+      .catch(() => setLinkError(true))
   }, [])
 
   useEffect(() => {
     loadChallenge()
   }, [loadChallenge])
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
-    if (!challenge || answer === '') return
+  useEffect(() => {
+    if (!challenge) return
 
-    setSubmitting(true)
-    setError(null)
+    const tick = () => {
+      const secs = Math.max(0, Math.round((new Date(challenge.expiresAt).getTime() - Date.now()) / 1000))
+      setRemaining(secs)
+      if (secs === 0 && dispatch !== 'dispatching') {
+        loadChallenge() // TTL hit — reissue automatically rather than dead-ending the terminal
+      }
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [challenge, dispatch, loadChallenge])
+
+  async function submit(fullCode: string) {
+    if (!challenge) return
+    setDispatch('dispatching')
     try {
-      const result = await verifyAdminChallenge(challenge.challengeId, Number(answer))
+      const result = await verifyOtpChallenge(challenge.challengeId, fullCode)
       if (result.success && result.token) {
-        setAuthenticated(result.token)
+        setDispatch('success')
+        // Hold on the ACK line briefly so the rain has time to shift to green before the
+        // dashboard view takes over.
+        setTimeout(() => setAuthenticated(result.token!), 600)
       } else {
-        setError('Incorrect — here\'s another one.')
+        setDispatch('error')
+        setShake(true)
+        setTimeout(() => setShake(false), 450)
         loadChallenge()
       }
     } catch {
-      setError('Could not reach the gateway.')
-    } finally {
-      setSubmitting(false)
+      setDispatch('error')
+      setShake(true)
+      setTimeout(() => setShake(false), 450)
     }
   }
 
+  function handleCodeChange(value: string) {
+    const digits = value.replace(/\D/g, '').slice(0, 6)
+    setCode(digits)
+    if (digits.length === 6 && dispatch === 'idle') {
+      void submit(digits)
+    }
+  }
+
+  if (linkError) {
+    return (
+      <div className="flex flex-col gap-3">
+        <p className="font-mono text-sm text-red-400">&gt; ERROR — GATEWAY UNREACHABLE.</p>
+        <button
+          onClick={loadChallenge}
+          className="self-start rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-white transition-colors hover:bg-white/10"
+        >
+          Retry
+        </button>
+      </div>
+    )
+  }
+
+  const locked = dispatch === 'dispatching' || dispatch === 'success' || !challenge
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <p className="text-sm text-white/60">Solve this to unlock the admin portal:</p>
-      <p className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-center font-mono text-2xl text-white">
-        {challenge?.prompt ?? '…'}
+    <motion.div
+      animate={shake ? { x: [0, -8, 8, -8, 8, 0] } : { x: 0 }}
+      transition={{ duration: 0.45 }}
+      className="flex flex-col gap-4"
+    >
+      <p className="text-sm text-white/60">
+        {challenge ? 'Enter the 6-digit Level 5 access code.' : 'Requesting challenge...'}
       </p>
+
       <input
-        type="number"
+        type="text"
         inputMode="numeric"
-        value={answer}
-        onChange={(e) => setAnswer(e.target.value)}
+        value={code}
+        onChange={(e) => handleCodeChange(e.target.value)}
+        disabled={locked}
         autoFocus
-        placeholder="Answer"
-        className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white outline-none focus:border-white/30"
+        placeholder="------"
+        maxLength={6}
+        className="w-full rounded-lg border border-white/10 bg-black/40 px-4 py-3 text-center font-mono text-3xl tracking-[0.75em] text-white outline-none transition-colors focus:border-emerald-400/50 disabled:opacity-60"
       />
-      {error && <p className="text-sm text-red-400">{error}</p>}
-      <button
-        type="submit"
-        disabled={submitting || !challenge}
-        className="self-start rounded-full bg-white px-5 py-2 text-sm font-medium text-black transition-opacity disabled:opacity-50"
-      >
-        Unlock
-      </button>
-    </form>
+
+      {challenge && (
+        <div className="flex items-center justify-between text-xs text-white/40">
+          <span>{challenge.deliveryMethod === 'push' ? 'Dispatched via push' : 'Check server console (dev fallback)'}</span>
+          <span className={`font-mono ${remaining <= 10 ? 'animate-pulse text-red-400' : ''}`}>
+            {String(remaining).padStart(2, '0')}s
+          </span>
+        </div>
+      )}
+
+      {dispatch !== 'idle' && (
+        <div className="rounded-lg border border-white/10 bg-black/50 p-3 font-mono text-xs text-white/70">
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            &gt; REQUESTING VAPID DISPATCH...
+          </motion.p>
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>
+            &gt; VERIFYING CHALLENGE TOKEN...
+          </motion.p>
+          {dispatch === 'success' && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-emerald-300"
+            >
+              &gt; ACK 200 — ACCESS GRANTED.
+            </motion.p>
+          )}
+          {dispatch === 'error' && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-red-400"
+            >
+              &gt; ACK 401 — CHALLENGE REJECTED.
+            </motion.p>
+          )}
+        </div>
+      )}
+    </motion.div>
   )
 }
 
 function AdminDashboard() {
   const logout = useAdminStore((s) => s.logout)
+  const token = useAdminStore((s) => s.token)
+  const [registering, setRegistering] = useState(false)
+  const [pushStatus, setPushStatus] = useState<{ ok: boolean; message: string } | null>(null)
+
+  async function handleRegisterPush() {
+    if (!token) return
+    setRegistering(true)
+    setPushStatus(null)
+    setPushStatus(await registerDevicePush(token))
+    setRegistering(false)
+  }
 
   return (
     <>
@@ -136,6 +235,24 @@ function AdminDashboard() {
         </div>
       </div>
 
+      <div className="mt-6 flex flex-col gap-2 rounded-lg border border-white/10 bg-white/5 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-white/50">
+            <BellRing className="h-3.5 w-3.5" /> Push OTP Delivery
+          </span>
+          <button
+            onClick={handleRegisterPush}
+            disabled={registering}
+            className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white transition-colors hover:bg-white/10 disabled:opacity-50"
+          >
+            {registering ? 'Registering…' : 'Enable on this device'}
+          </button>
+        </div>
+        {pushStatus && (
+          <p className={`text-xs ${pushStatus.ok ? 'text-emerald-300' : 'text-red-400'}`}>{pushStatus.message}</p>
+        )}
+      </div>
+
       <div className="mt-6 flex items-center justify-between">
         <a
           href="#"
@@ -173,10 +290,12 @@ export function AdminPortalModal() {
             exit={{ opacity: 0, scale: 0.96, y: 12 }}
             transition={{ type: 'spring', stiffness: 300, damping: 28 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#0f0f16] p-6 backdrop-blur-md"
+            className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0f0f16]"
           >
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Local Admin Portal</h2>
+            <AdminMatrixCanvas colorPhase={isAuthenticated ? 'green' : 'red'} />
+
+            <div className="relative z-10 flex shrink-0 items-center justify-between border-b border-white/10 bg-[#0f0f16]/75 px-6 py-4 backdrop-blur-sm">
+              <h2 className="font-mono text-lg font-semibold text-white">Level 5 Access Terminal</h2>
               <button
                 onClick={closeAdmin}
                 className="text-white/50 transition-colors hover:text-white"
@@ -186,7 +305,9 @@ export function AdminPortalModal() {
               </button>
             </div>
 
-            {isAuthenticated ? <AdminDashboard /> : <ChallengeGate />}
+            <div className="relative z-10 overflow-y-auto bg-[#0f0f16]/75 p-6 backdrop-blur-sm">
+              {isAuthenticated ? <AdminDashboard /> : <OtpGate />}
+            </div>
           </motion.div>
         </motion.div>
       )}

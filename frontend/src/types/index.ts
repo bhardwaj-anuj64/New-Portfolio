@@ -1,17 +1,9 @@
 import type { LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-export type Perspective = 'professional' | 'tinkerer'
-
-export interface SegmentedControlOption {
+export interface NavItem {
+  id: string
   label: string
-  value: string
-}
-
-export interface SegmentedControlProps {
-  options: SegmentedControlOption[]
-  value: string
-  onChange: (value: string) => void
 }
 
 export interface GlassCardProps {
@@ -24,6 +16,31 @@ export interface FeatureCardData {
   icon: LucideIcon
   title: string
   description: string
+}
+
+export interface EnterpriseSkill {
+  icon: LucideIcon
+  name: string
+  impact: string
+}
+
+export interface ShowcaseProject {
+  title: string
+  description: string
+  tags: string[]
+  repoUrl: string
+  demoUrl: string
+}
+
+export interface TinkeringSkill {
+  icon: LucideIcon
+  name: string
+  notes: string
+}
+
+export interface TinkeringSkillGroup {
+  title: string
+  skills: TinkeringSkill[]
 }
 
 export interface ServerNodeStatus {
@@ -58,10 +75,10 @@ export interface TelemetryResponse {
   timestamp: string
 }
 
-export interface ChallengeResponse {
+export interface OtpChallengeResponse {
   challengeId: string
-  prompt: string
   expiresAt: string
+  deliveryMethod: 'push' | 'console'
 }
 
 export interface VerifyResponse {
@@ -78,4 +95,20 @@ export interface JobProgressEvent {
   jobId: string
   percentage: number
   status: string
+}
+
+export interface ContactResponse {
+  success: boolean
+  message: string
+}
+
+export interface QualificationMilestone {
+  id: string
+  type: 'degree' | 'certification'
+  title: string
+  institution: string
+  date: string
+  icon: LucideIcon
+  details: string
+  skills: string[]
 }

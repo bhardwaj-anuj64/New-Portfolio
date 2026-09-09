@@ -8,6 +8,8 @@
 
 html {
   color-scheme: dark;
+  scroll-snap-type: y proximity;
+  scroll-padding-top: 5rem;
 }
 
 body {
