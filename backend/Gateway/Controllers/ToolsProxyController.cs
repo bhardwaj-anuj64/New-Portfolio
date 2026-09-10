@@ -40,10 +40,28 @@ public class ToolsProxyController : ControllerBase
             _destinationPrefix,
             ForwarderHttpClient,
             ForwarderRequestConfig.Empty,
-            HttpTransformer.Default);
+            new StripPrefixTransformer(path));
 
         return error == ForwarderError.None
             ? new EmptyResult()
             : StatusCode(StatusCodes.Status502BadGateway, new { message = "The tools service is unreachable." });
+    }
+
+    // HttpTransformer.Default forwards the FULL incoming request path (e.g. "/api/tools/calibrate")
+    // onto destinationPrefix, but the tools service mounts its routes at the bare path ("/calibrate")
+    // with no "/api/tools" prefix of its own — so the "api/tools" segment this controller matched on
+    // has to be stripped before forwarding, not appended a second time.
+    private sealed class StripPrefixTransformer(string path) : HttpTransformer
+    {
+        public override async ValueTask TransformRequestAsync(
+            HttpContext httpContext,
+            HttpRequestMessage proxyRequest,
+            string destinationPrefix,
+            CancellationToken cancellationToken)
+        {
+            await base.TransformRequestAsync(httpContext, proxyRequest, destinationPrefix, cancellationToken);
+            proxyRequest.RequestUri = RequestUtilities.MakeDestinationAddress(
+                destinationPrefix, "/" + path, httpContext.Request.QueryString);
+        }
     }
 }
