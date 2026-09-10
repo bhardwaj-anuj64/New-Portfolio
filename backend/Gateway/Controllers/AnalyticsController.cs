@@ -12,9 +12,9 @@ public class AnalyticsController(IAnalyticsService analytics) : ControllerBase
 {
     [HttpPost("pageview")]
     [AllowAnonymous]
-    public IActionResult RecordPageView()
+    public IActionResult RecordPageView([FromBody] PageViewRequest? request)
     {
-        analytics.RecordPageView();
+        analytics.RecordPageView(request?.VisitorId);
         return NoContent();
     }
 

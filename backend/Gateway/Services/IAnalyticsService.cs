@@ -4,7 +4,7 @@ namespace Gateway.Services;
 
 public interface IAnalyticsService
 {
-    void RecordPageView();
+    void RecordPageView(string? visitorId);
 
     void RecordResumeDownload();
 

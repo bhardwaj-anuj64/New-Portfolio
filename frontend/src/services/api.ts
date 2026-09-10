@@ -88,7 +88,20 @@ function beacon(path: string, body?: unknown): void {
   }).catch(() => {})
 }
 
-export const recordPageView = (): void => beacon('/api/analytics/pageview')
+// Persisted per-browser so repeat visits/refreshes don't inflate the unique-visit count.
+function getVisitorId(): string {
+  try {
+    const existing = localStorage.getItem('visitorId')
+    if (existing) return existing
+    const id = crypto.randomUUID()
+    localStorage.setItem('visitorId', id)
+    return id
+  } catch {
+    return crypto.randomUUID()
+  }
+}
+
+export const recordPageView = (): void => beacon('/api/analytics/pageview', { visitorId: getVisitorId() })
 
 export const recordResumeDownload = (): void => beacon('/api/analytics/resume-download')
 

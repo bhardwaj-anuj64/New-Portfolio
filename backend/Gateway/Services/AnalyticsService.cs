@@ -9,15 +9,16 @@ public class AnalyticsService : IAnalyticsService
     private const int MaxRecentErrors = 50;
     private const int MaxMessageLength = 500;
     private const int MaxSourceLength = 200;
+    private const int MaxVisitorIdLength = 100;
 
-    private long _pageViews;
+    private readonly ConcurrentDictionary<string, byte> _uniqueVisitors = new();
     private long _resumeDownloads;
     private readonly ConcurrentQueue<ErrorLogEntry> _recentErrors = new();
     private readonly object _fileLock = new();
     private readonly string _statsFilePath;
     private readonly ILogger<AnalyticsService> _logger;
 
-    private record PersistedStats(long PageViews, long ResumeDownloads, ErrorLogEntry[] RecentErrors);
+    private record PersistedStats(long ResumeDownloads, ErrorLogEntry[] RecentErrors, string[] VisitorIds);
 
     public AnalyticsService(IWebHostEnvironment env, ILogger<AnalyticsService> logger)
     {
@@ -26,10 +27,17 @@ public class AnalyticsService : IAnalyticsService
         Load();
     }
 
-    public void RecordPageView()
+    public void RecordPageView(string? visitorId)
     {
-        Interlocked.Increment(ref _pageViews);
-        Persist();
+        if (string.IsNullOrWhiteSpace(visitorId) || visitorId.Length > MaxVisitorIdLength)
+        {
+            return;
+        }
+
+        if (_uniqueVisitors.TryAdd(visitorId, 0))
+        {
+            Persist();
+        }
     }
 
     public void RecordResumeDownload()
@@ -52,7 +60,7 @@ public class AnalyticsService : IAnalyticsService
     }
 
     public AnalyticsStatsResponse GetStats() =>
-        new(Interlocked.Read(ref _pageViews), Interlocked.Read(ref _resumeDownloads), _recentErrors.Reverse().ToArray());
+        new(_uniqueVisitors.Count, Interlocked.Read(ref _resumeDownloads), _recentErrors.Reverse().ToArray());
 
     private void Load()
     {
@@ -64,11 +72,14 @@ public class AnalyticsService : IAnalyticsService
             var saved = JsonSerializer.Deserialize<PersistedStats>(json);
             if (saved is null) return;
 
-            _pageViews = saved.PageViews;
             _resumeDownloads = saved.ResumeDownloads;
             foreach (var error in saved.RecentErrors)
             {
                 _recentErrors.Enqueue(error);
+            }
+            foreach (var visitorId in saved.VisitorIds ?? [])
+            {
+                _uniqueVisitors.TryAdd(visitorId, 0);
             }
         }
         catch (Exception ex)
@@ -88,7 +99,7 @@ public class AnalyticsService : IAnalyticsService
                 var dir = Path.GetDirectoryName(_statsFilePath)!;
                 Directory.CreateDirectory(dir);
 
-                var snapshot = new PersistedStats(_pageViews, _resumeDownloads, _recentErrors.ToArray());
+                var snapshot = new PersistedStats(_resumeDownloads, _recentErrors.ToArray(), _uniqueVisitors.Keys.ToArray());
                 var tempPath = _statsFilePath + ".tmp";
                 File.WriteAllText(tempPath, JsonSerializer.Serialize(snapshot));
                 File.Move(tempPath, _statsFilePath, overwrite: true);

@@ -32,6 +32,9 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
+      <div className="fixed inset-x-0 top-0 z-50 h-9 bg-amber-500 px-4 text-center text-xs font-semibold leading-9 text-black">
+        🚧 Work in Progress — you may encounter incomplete features or rough edges.
+      </div>
       <Navbar />
       <Hero />
       <WelcomeSection />

@@ -5,3 +5,5 @@ public record AnalyticsStatsResponse(long PageViews, long ResumeDownloads, Error
 public record ErrorLogEntry(DateTimeOffset Timestamp, string Message, string? Source);
 
 public record ClientErrorRequest(string Message, string? Source);
+
+public record PageViewRequest(string? VisitorId);

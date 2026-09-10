@@ -204,7 +204,7 @@ function SiteAnalytics() {
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
               <p className="text-2xl font-semibold text-white">{stats.pageViews}</p>
-              <p className="text-xs text-white/50">Page views</p>
+              <p className="text-xs text-white/50">Unique visits</p>
             </div>
             <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
               <p className="text-2xl font-semibold text-white">{stats.resumeDownloads}</p>
