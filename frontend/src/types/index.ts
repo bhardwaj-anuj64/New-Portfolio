@@ -43,17 +43,10 @@ export interface TinkeringSkillGroup {
   skills: TinkeringSkill[]
 }
 
-export interface ServerNodeStatus {
+export interface ContainerStatus {
   name: string
-  status: 'online' | 'degraded' | 'offline'
-  cpu: number
-  memory: number
-}
-
-export interface DockerContainerStatus {
-  name: string
-  status: 'running' | 'stopped' | 'restarting'
-  uptime: string
+  state: string
+  status: string
 }
 
 export interface ToolShellProps {
@@ -87,15 +80,6 @@ export interface VerifyResponse {
   expiresAt: string | null
 }
 
-export interface StlJobAccepted {
-  jobId: string
-}
-
-export interface JobProgressEvent {
-  jobId: string
-  percentage: number
-  status: string
-}
 
 export interface ContactResponse {
   success: boolean

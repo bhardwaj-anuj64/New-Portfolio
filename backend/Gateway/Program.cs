@@ -1,5 +1,4 @@
 using System.Text;
-using Gateway.Hubs;
 using Gateway.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.CookiePolicy;
@@ -12,12 +11,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpForwarder();
-builder.Services.AddSignalR();
 
 builder.Services.AddSingleton<IWebPushService, WebPushService>();
 builder.Services.AddSingleton<IEmailService, EmailService>();
-builder.Services.AddSingleton<IJobQueueService, JobQueueService>();
 builder.Services.AddSingleton<IAnalyticsService, AnalyticsService>();
+builder.Services.AddSingleton<IDockerService, DockerService>();
 
 // Docker/production origins arrive as a single comma-separated ALLOWED_ORIGINS env var (arrays
 // don't map cleanly onto env vars); appsettings' Cors:AllowedOrigins is the local-dev fallback.
@@ -84,6 +82,5 @@ app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.MapHub<JobHub>("/hubs/jobs");
 
 app.Run();

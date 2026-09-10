@@ -11,6 +11,10 @@ services:
       HomeAssistant__BaseUrl: ${HOME_ASSISTANT_BASE_URL:-http://homeassistant.local:8123}
       HomeAssistant__LongLivedToken: ${HOME_ASSISTANT_TOKEN:-}
       Tools__BaseUrl: ${TOOLS_BASE_URL:-http://tools:8000}
+    volumes:
+      # Read-only: lets the Gateway list sibling containers (Systems Lab / admin dashboard
+      # telemetry) via the Docker Engine API without giving it control over the daemon.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
       - tools
     networks:

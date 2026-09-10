@@ -15,7 +15,6 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': backendUrl,
-      '/hubs': { target: backendUrl, ws: true },
     },
   },
 })

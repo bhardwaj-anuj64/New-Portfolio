@@ -146,3 +146,23 @@ jobs:
           echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker compose -f docker-compose.prod.yml pull
           docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+      # Containers restarting isn't the same as containers working — confirm both host-mapped
+      # ports actually answer before calling the deploy done, so a broken image fails the run
+      # instead of silently going live.
+      - name: Health check
+        working-directory: /home/deploy/app
+        run: |
+          check() {
+            for i in $(seq 1 15); do
+              if curl -sf "$1" > /dev/null; then
+                echo "$1 is healthy"
+                return 0
+              fi
+              sleep 2
+            done
+            echo "$1 failed to become healthy after 30s" >&2
+            return 1
+          }
+          check http://localhost:5000/api/system/health
+          check http://localhost:8080/

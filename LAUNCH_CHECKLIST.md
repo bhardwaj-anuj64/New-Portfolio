@@ -34,12 +34,9 @@ Everything below reads as specific, plausible professional content, but it was w
 
 ## Mock backend data (presented as live, isn't)
 
-- [ ] `SystemController.cs` → `GetTelemetry()` — `cpuUsagePercent` is `Random.Shared.NextDouble()`, `activeServices` is hardcoded `4`. Only `memoryUsageMb` is real (actual gateway process memory).
-- [ ] `SystemsLab.tsx` — the "Why & How I Built It" expandable copy claims **"the numbers above are real, not mocked"** — this is currently false for 2 of the 3 stats. Either fix the backend to return real numbers, or fix the copy.
-- [ ] `SystemsLab.tsx` / `AdminPortalModal.tsx` — the `NODES` arrays (`proxmox-01`, `nas-truenas`, `k3s-worker-2`) are 100% hardcoded, not wired to any backend at all. Same for `AdminDashboard`'s `CONTAINERS` array (`portfolio-api`, `postgres`, `traefik`, ...).
-- [ ] `JobQueueService.cs` → the "3D Mesh Generator" tool in the Microservice Playground **ignores the image you upload** and generates a random procedural heightmap instead. The UI looks fully functional; the backend doesn't actually process depth maps yet.
-
-The homelab server (`portfolio-docker` VM on Proxmox) now exists and is live at `anujb.dev`, so these four are no longer blocked on infrastructure — the remaining work is wiring the code itself to real Docker/Proxmox metrics, or relabeling this section as illustrative.
+- [x] `SystemController.cs` → `GetTelemetry()` — `cpuUsagePercent` is now sampled from the Gateway process's real `TotalProcessorTime` delta (was `Random.Shared.NextDouble()`); `activeServices` now counts real running containers via the new `IDockerService` (was hardcoded `4`).
+- [x] `SystemsLab.tsx` — the "Why & How I Built It" copy claiming **"the numbers above are real, not mocked"** is now true for all three stats; the copy's fabricated "3-node Proxmox cluster + TrueNAS + k3s" description was also corrected to the actual single-VM setup.
+- [x] `SystemsLab.tsx` / `AdminPortalModal.tsx` — the hardcoded `NODES`/`CONTAINERS` arrays are replaced by a new `GET /api/system/containers` endpoint (`IDockerService` reading the Docker Engine API over `/var/run/docker.sock`, mounted read-only into the `gateway` container in both compose files). `AdminPortalModal`'s separate fictional "Server Nodes" panel (there's only one VM, not a cluster) was dropped rather than wired to fake data.
 
 ## Microservice Playground — real backbone
 
@@ -48,7 +45,7 @@ The homelab server (`portfolio-docker` VM on Proxmox) now exists and is live at 
 - [x] Containerized (`Dockerfile`), wired into `docker-compose.yml`/`docker-compose.prod.yml` as an internal-only `tools` service, built/pushed in CI (`.github/workflows/deploy.yml`), and reachable from the Gateway via `ToolsProxyController` (`/api/tools/**`).
 - [x] **Tool Tracer** — real, gridfinity-organizer path only (`frontend/src/components/tools/tooltracer/`). Full flow: 4-corner calibration → magic-wand segmentation with a live mask preview → island review → per-tool pocket depth → mesh preview (watertight-checked) → STL/DXF export. Replaces the old `DxfTool.tsx` ("DXF Contour Tracer") in the Microservice Playground. "Individual holder" and G-code output types are shown disabled/"coming soon" in the UI rather than silently missing — neither is designed yet (`portfolio-microservices/knowledge/05-open-items.md`).
 - [x] **Keychain Generator** — real, v1 scope (`frontend/src/components/tools/keychain/`). Full flow: grabcut segmentation (bbox + fg/bg scribbles, live preview) → tonal-band relief (live preview) → assembly (fixed-width border, on/off light-box, on/off keyring hole) → watertight-checked mesh preview → STL/DXF export. Backed by a new `build_masked_heightfield_solid` in `mesh_builder.py` (follows an arbitrary silhouette/hole boundary instead of always extruding a rectangle) and `POST /mesh/from_silhouette`. Border-style library, real hook-placement algorithm, and light-box/tray geometry beyond a flat on/off toggle remain deliberately out of scope — not decided against, just deferred past v1.
-- [ ] `Mesh3DTool.tsx` ("3D Mesh Generator") is still the random-heightmap mock in `JobQueueService.cs` noted above — untouched by both the Tool Tracer and Keychain work. Per the settled design, Mesh Generator is shared backend infra, not its own demo; now that both real demos exist, retiring this tab (or replacing it with something else) is a decision to make explicitly, not defer further.
+- [x] `Mesh3DTool.tsx` ("3D Mesh Generator") — retired. It was a random-heightmap mock (`JobQueueService.cs`) standing in for a demo of shared backend infra, not a tool of its own; now that Tool Tracer and Keychain Generator are both real, the tab, the mock job-queue/SignalR pipeline behind it (`JobController`, `JobQueueService`, `JobHub`, `signalr.ts`), and the `@microsoft/signalr` dependency were all removed.
 
 ## Site analytics
 
@@ -57,7 +54,7 @@ The homelab server (`portfolio-docker` VM on Proxmox) now exists and is live at 
 ## Deploy pipeline
 
 - [x] `.github/workflows/deploy.yml` → `deploy:` job — was disabled/commented out pending the homelab server. Now live: a self-hosted GitHub Actions runner on `portfolio-docker` (behind NAT, no port forwarding) pulls sha-tagged images and redeploys via Docker Compose on every push to `main`. Public traffic reaches it through a Cloudflare Tunnel (`anujb.dev` → frontend, `/api/*` → gateway).
-- [ ] No post-deploy health check — the `deploy` job restarts containers but doesn't verify they came up healthy afterward. Add a curl/health-endpoint check as a follow-up step.
+- [x] Post-deploy health check — the `deploy` job now curls `http://localhost:5000/api/system/health` (gateway) and `http://localhost:8080/` (frontend) after `up -d`, retrying for up to 30s, and fails the run if either never comes up healthy.
 - [ ] The `deploy` job never checks out the repo — it runs `docker compose pull && up -d` against a **static copy** of `docker-compose.prod.yml` that lives on the server at `~/app/docker-compose.prod.yml` and is manually maintained. Any future change to that file in git needs a manual sync to the server (discovered when the `tools` service didn't appear after its first deploy). Worth fixing properly — e.g. have the `deploy` job check out the repo and scp/rsync the compose file (and relevant `.env` keys) on every run — before this bites again.
 
 ## Site metadata (missing, not just placeholder)

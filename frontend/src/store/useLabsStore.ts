@@ -10,7 +10,7 @@ interface LabsState {
 
 export const useLabsStore = create<LabsState>((set) => ({
   isOpen: false,
-  activeToolId: 'mesh3d',
+  activeToolId: 'tooltracer',
   open: (toolId) => set((s) => ({ isOpen: true, activeToolId: toolId ?? s.activeToolId })),
   close: () => set({ isOpen: false }),
   setActiveTool: (toolId) => set({ activeToolId: toolId }),

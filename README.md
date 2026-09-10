@@ -11,12 +11,10 @@ A bespoke full-stack portfolio site for Anuj Bhardwaj. Not a template: a React +
 - Tailwind CSS v4
 - `three.js` / `@react-three/fiber` / `@react-three/drei` for the WebGL section backgrounds
 - Framer Motion for UI animation, Zustand for local state
-- `@microsoft/signalr` client for the async job (microservice playground) hub
 
 **Backend** (`backend/Gateway/`)
 - ASP.NET Core 8 Web API — a single "Gateway" service, not a microservice mesh
 - JWT bearer auth for admin-only endpoints
-- SignalR hub for streaming async job results
 - SMTP (Gmail) for the contact form, Web Push (VAPID) for admin OTP approval
 
 **Infra**
@@ -32,13 +30,12 @@ frontend/
   src/
     components/      one folder per page section (hero, nav, contact, tinkering, ...)
                       + admin/ (OTP-gated dashboard) and tools/ (microservice playground)
-    services/         api.ts (REST calls), signalr.ts, pushSubscription.ts
+    services/         api.ts (REST calls), pushSubscription.ts
     store/             zustand stores (admin auth, labs modal)
     hooks/             small reusable hooks (canvas render loop, intersection, page visibility)
 backend/Gateway/
   Controllers/        one controller per feature area (see API overview below)
-  Services/           business logic behind each controller (analytics, email, push, job queue)
-  Hubs/                JobHub.cs — SignalR hub for async job progress/results
+  Services/           business logic behind each controller (analytics, email, push)
   Models/              request/response DTOs
 portfolio-microservices/
   tools-service/      FastAPI + OpenCV, one container: segmentation, tonal-banding, mesh generation
@@ -48,7 +45,7 @@ docker-compose.prod.yml    production — pulls versioned images from GHCR
 .github/workflows/deploy.yml
 ```
 
-`portfolio-microservices/tools-service/` is the shared backbone for two planned "Microservice Playground" demos — Keychain Generator and Tool Tracer (Mesh Generator is shared infra, not a demo of its own) — reachable from the Gateway at `/api/tools/**`. See [LAUNCH_CHECKLIST.md](./LAUNCH_CHECKLIST.md) for what's wired vs. still mocked, and `portfolio-microservices/knowledge/` for the full design.
+`portfolio-microservices/tools-service/` is the shared backbone for the "Microservice Playground" demos — Keychain Generator and Tool Tracer (Mesh Generator is shared infra, not a demo of its own) — reachable from the Gateway at `/api/tools/**`. See [LAUNCH_CHECKLIST.md](./LAUNCH_CHECKLIST.md) for what's wired vs. still mocked, and `portfolio-microservices/knowledge/` for the full design.
 
 ## Getting started (local dev)
 
@@ -59,7 +56,7 @@ Prerequisites: Node 22+, .NET 8 SDK.
 cd backend/Gateway
 dotnet run
 
-# Frontend — http://localhost:5173, proxies /api and /hubs to the backend above
+# Frontend — http://localhost:5173, proxies /api to the backend above
 cd frontend
 npm install
 npm run dev
@@ -102,7 +99,6 @@ All routes are under `/api`, prefixed by controller area:
 | `admin/challenge` | `POST /generate`, `POST /verify`, `GET /vapid-public-key`, `POST /subscribe` | OTP challenge/response admin login, with optional Web Push approval on a second device |
 | `admin/homeassistant` | `GET /{**path}` | Authenticated reverse proxy to a Home Assistant instance |
 | `tools` | `GET`/`POST /api/tools/{**path}` | Public reverse proxy to the `tools` service (segmentation, tonal-banding, mesh generation) |
-| `jobs` | `POST /api/jobs/stl`, `GET /api/jobs/stl/{jobId}` | Kicks off an async job; progress/results also stream over the `/hubs/jobs` SignalR hub |
 | `system` | `GET /api/system/health`, `GET /api/system/telemetry` | Liveness + basic process metrics |
 
 ## Known gaps

@@ -47,8 +47,7 @@ const MILESTONES: QualificationMilestone[] = [
     institution: 'The Linux Foundation',
     date: 'Mar 2024',
     icon: Network,
-    details:
-      'Hands-on cluster administration exam — the same skill set now running the k3s-worker-2 node in the homelab.',
+    details: 'Hands-on cluster administration exam covering cluster setup, workloads, networking, and troubleshooting.',
     skills: ['Kubernetes', 'k3s', 'Container Orchestration', 'Networking'],
   },
 ]

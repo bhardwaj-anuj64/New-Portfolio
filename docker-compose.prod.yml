@@ -19,6 +19,9 @@ services:
       # Persists push subscriptions across redeploys — everything else in the gateway is
       # deliberately in-memory (OTP challenges are 60s-lived, job results are transient).
       - gateway-data:/app/data
+      # Read-only: lets the Gateway list sibling containers (Systems Lab / admin dashboard
+      # telemetry) via the Docker Engine API without giving it control over the daemon.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
       - tools
     networks:

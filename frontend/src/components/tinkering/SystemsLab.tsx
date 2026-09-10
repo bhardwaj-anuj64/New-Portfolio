@@ -1,23 +1,16 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown, Cpu, HeartPulse, MemoryStick, Server } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { getHealth, getTelemetry } from '../../services/api'
-import type { ServerNodeStatus } from '../../types'
+import { getContainers, getHealth, getTelemetry } from '../../services/api'
 import { GlassCard } from '../common/GlassCard'
 
 const POLL_MS = 5000
 const POLL_BACKOFF_MAX_MS = 30000
 
-const NODES: ServerNodeStatus[] = [
-  { name: 'proxmox-01', status: 'online', cpu: 18, memory: 42 },
-  { name: 'nas-truenas', status: 'online', cpu: 6, memory: 61 },
-  { name: 'k3s-worker-2', status: 'degraded', cpu: 84, memory: 77 },
-]
-
-const statusColor: Record<ServerNodeStatus['status'], string> = {
-  online: 'bg-emerald-400',
-  degraded: 'bg-amber-400',
-  offline: 'bg-red-400',
+function statusDotColor(state: string) {
+  if (state === 'running') return 'bg-emerald-400'
+  if (state === 'restarting') return 'bg-amber-400'
+  return 'bg-red-400'
 }
 
 function formatUptime(seconds: number) {
@@ -75,6 +68,7 @@ function usePolling<T>(fetcher: () => Promise<T>, enabled: boolean) {
 export function SystemsLab() {
   const [notesOpen, setNotesOpen] = useState(false)
   const { data: telemetry, state: telemetryState } = usePolling(getTelemetry, true)
+  const { data: containers } = usePolling(getContainers, true)
   const { data: health, state: healthState } = usePolling(getHealth, notesOpen)
   const telemetryLive = telemetryState === 'live'
 
@@ -108,18 +102,22 @@ export function SystemsLab() {
           <Server className="h-3.5 w-3.5" /> Live Microservices
         </h4>
         <div className="grid gap-3 sm:grid-cols-3">
-          {NODES.map((node) => (
-            <div
-              key={node.name}
-              className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm"
-            >
-              <span className="font-mono text-white/80">{node.name}</span>
-              <span className="flex items-center gap-2 text-white/50">
-                {node.cpu}%
-                <span className={`h-2 w-2 rounded-full ${statusColor[node.status]}`} />
-              </span>
-            </div>
-          ))}
+          {containers && containers.length > 0 ? (
+            containers.map((container) => (
+              <div
+                key={container.name}
+                className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm"
+              >
+                <span className="font-mono text-white/80">{container.name}</span>
+                <span className="flex items-center gap-2 text-white/50">
+                  {container.status}
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${statusDotColor(container.state)}`} />
+                </span>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-white/40 sm:col-span-3">No container data available.</p>
+          )}
         </div>
       </div>
 
@@ -152,11 +150,13 @@ export function SystemsLab() {
           >
             <div className="flex flex-col gap-4 rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-md">
               <p className="text-sm text-white/70">
-                This homelab runs on a 3-node Proxmox cluster feeding a TrueNAS array and a k3s worker for
-                container workloads. The dashboard above talks to a small ASP.NET Core service exposing{' '}
-                <code className="rounded bg-white/10 px-1 py-0.5 text-xs">/api/system/health</code> and{' '}
-                <code className="rounded bg-white/10 px-1 py-0.5 text-xs">/api/system/telemetry</code>, polled
-                every 5 seconds — the numbers above are real, not mocked.
+                This homelab runs on a single Proxmox VM hosting this site's Docker stack. The dashboard above
+                talks to a small ASP.NET Core service exposing{' '}
+                <code className="rounded bg-white/10 px-1 py-0.5 text-xs">/api/system/health</code>,{' '}
+                <code className="rounded bg-white/10 px-1 py-0.5 text-xs">/api/system/telemetry</code>, and{' '}
+                <code className="rounded bg-white/10 px-1 py-0.5 text-xs">/api/system/containers</code> (the
+                latter reads the Docker Engine API directly), polled every 5 seconds — the numbers above are
+                real, not mocked.
               </p>
 
               <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2">

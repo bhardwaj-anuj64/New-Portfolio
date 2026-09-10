@@ -4,6 +4,7 @@ import type {
   BandPreviewResponse,
   BboxPx,
   ContactResponse,
+  ContainerStatus,
   FinalizeResponse,
   HealthResponse,
   IslandsResponse,
@@ -12,12 +13,11 @@ import type {
   OtpChallengeResponse,
   PixelPoint,
   RectifyResponse,
-  StlJobAccepted,
   TelemetryResponse,
   VerifyResponse,
 } from '../types'
 
-// Always relative — the Vite dev server proxies /api and /hubs to the local backend (see
+// Always relative — the Vite dev server proxies /api to the local backend (see
 // vite.config.ts), and production serves both from the same origin. This also means the app
 // works when reached from another device on the LAN (e.g. a phone), not just localhost.
 export const API_BASE_URL = ''
@@ -45,6 +45,8 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
 export const getHealth = () => getJson<HealthResponse>('/api/system/health')
 
 export const getTelemetry = () => getJson<TelemetryResponse>('/api/system/telemetry')
+
+export const getContainers = () => getJson<ContainerStatus[]>('/api/system/containers')
 
 export const generateOtpChallenge = async (): Promise<OtpChallengeResponse> => {
   const res = await fetch(`${API_BASE_URL}/api/admin/challenge/generate`, { method: 'POST' })
@@ -82,23 +84,6 @@ export const subscribeDevicePush = async (
   })
   return res.ok
 }
-
-export const createStlJob = async (
-  imageData: string,
-  gridResolution = 24,
-): Promise<StlJobAccepted> => {
-  const res = await fetch(`${API_BASE_URL}/api/jobs/stl`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ imageData, gridResolution }),
-  })
-  if (!res.ok) {
-    throw new Error(`POST /api/jobs/stl failed: ${res.status}`)
-  }
-  return res.json() as Promise<StlJobAccepted>
-}
-
-export const stlResultUrl = (jobId: string) => `${API_BASE_URL}/api/jobs/stl/${jobId}`
 
 // Fire-and-forget: analytics must never break the page it's measuring.
 function beacon(path: string, body?: unknown): void {

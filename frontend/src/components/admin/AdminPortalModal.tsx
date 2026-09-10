@@ -1,32 +1,16 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { BarChart3, BellRing, Box, ExternalLink, LogOut, Server, X } from 'lucide-react'
+import { BarChart3, BellRing, Box, ExternalLink, LogOut, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { generateOtpChallenge, getAnalyticsStats, verifyOtpChallenge } from '../../services/api'
+import { generateOtpChallenge, getAnalyticsStats, getContainers, verifyOtpChallenge } from '../../services/api'
 import { registerDevicePush } from '../../services/pushSubscription'
 import { useAdminStore } from '../../store/useAdminStore'
-import type { AnalyticsStatsResponse, DockerContainerStatus, OtpChallengeResponse, ServerNodeStatus } from '../../types'
+import type { AnalyticsStatsResponse, ContainerStatus, OtpChallengeResponse } from '../../types'
 import { AdminMatrixCanvas } from './AdminMatrixCanvas'
 
-const NODES: ServerNodeStatus[] = [
-  { name: 'proxmox-01', status: 'online', cpu: 18, memory: 42 },
-  { name: 'nas-truenas', status: 'online', cpu: 6, memory: 61 },
-  { name: 'k3s-worker-2', status: 'degraded', cpu: 84, memory: 77 },
-]
-
-const CONTAINERS: DockerContainerStatus[] = [
-  { name: 'portfolio-api', status: 'running', uptime: '4d 12h' },
-  { name: 'portfolio-web', status: 'running', uptime: '4d 12h' },
-  { name: 'postgres', status: 'running', uptime: '11d 3h' },
-  { name: 'traefik', status: 'restarting', uptime: '2m' },
-]
-
-const dotColor: Record<string, string> = {
-  online: 'bg-emerald-400',
-  running: 'bg-emerald-400',
-  degraded: 'bg-amber-400',
-  restarting: 'bg-amber-400',
-  offline: 'bg-red-400',
-  stopped: 'bg-red-400',
+function statusDotColor(state: string) {
+  if (state === 'running') return 'bg-emerald-400'
+  if (state === 'restarting') return 'bg-amber-400'
+  return 'bg-red-400'
 }
 
 type DispatchStatus = 'idle' | 'dispatching' | 'success' | 'error'
@@ -235,6 +219,13 @@ function AdminDashboard() {
   const token = useAdminStore((s) => s.token)
   const [registering, setRegistering] = useState(false)
   const [pushStatus, setPushStatus] = useState<{ ok: boolean; message: string } | null>(null)
+  const [containers, setContainers] = useState<ContainerStatus[] | null>(null)
+
+  useEffect(() => {
+    getContainers()
+      .then(setContainers)
+      .catch(() => setContainers([]))
+  }, [])
 
   async function handleRegisterPush() {
     if (!token) return
@@ -253,42 +244,28 @@ function AdminDashboard() {
     <>
       <SiteAnalytics />
 
-      <div className="mt-6 grid gap-6 sm:grid-cols-2">
-        <div className="flex flex-col gap-3">
-          <h3 className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-white/50">
-            <Server className="h-3.5 w-3.5" /> Server Nodes
-          </h3>
-          {NODES.map((node) => (
-            <div
-              key={node.name}
-              className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm"
-            >
-              <span className="font-mono text-white/80">{node.name}</span>
-              <span className="flex items-center gap-2 text-white/50">
-                {node.cpu}% cpu
-                <span className={`h-2 w-2 rounded-full ${dotColor[node.status]}`} />
-              </span>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <h3 className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-white/50">
-            <Box className="h-3.5 w-3.5" /> Docker Containers
-          </h3>
-          {CONTAINERS.map((container) => (
+      <div className="mt-6 flex flex-col gap-3">
+        <h3 className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-white/50">
+          <Box className="h-3.5 w-3.5" /> Docker Containers
+        </h3>
+        {containers === null ? (
+          <p className="text-xs text-white/40">Loading…</p>
+        ) : containers.length === 0 ? (
+          <p className="text-xs text-white/40">No container data available.</p>
+        ) : (
+          containers.map((container) => (
             <div
               key={container.name}
               className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm"
             >
               <span className="font-mono text-white/80">{container.name}</span>
               <span className="flex items-center gap-2 text-white/50">
-                {container.uptime}
-                <span className={`h-2 w-2 rounded-full ${dotColor[container.status]}`} />
+                {container.status}
+                <span className={`h-2 w-2 shrink-0 rounded-full ${statusDotColor(container.state)}`} />
               </span>
             </div>
-          ))}
-        </div>
+          ))
+        )}
       </div>
 
       <div className="mt-6 flex flex-col gap-2 rounded-lg border border-white/10 bg-white/5 p-3">
