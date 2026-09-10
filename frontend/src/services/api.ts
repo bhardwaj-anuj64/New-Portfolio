@@ -1,8 +1,14 @@
 import type {
   AnalyticsStatsResponse,
   ContactResponse,
+  FinalizeResponse,
   HealthResponse,
+  IslandsResponse,
+  MaskPreviewResponse,
+  MeshResponse,
   OtpChallengeResponse,
+  PixelPoint,
+  RectifyResponse,
   StlJobAccepted,
   TelemetryResponse,
   VerifyResponse,
@@ -17,6 +23,18 @@ async function getJson<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`)
   if (!res.ok) {
     throw new Error(`GET ${path} failed: ${res.status}`)
+  }
+  return res.json() as Promise<T>
+}
+
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    throw new Error(`POST ${path} failed: ${res.status}`)
   }
   return res.json() as Promise<T>
 }
@@ -112,6 +130,78 @@ export const getAnalyticsStats = (token: string) =>
   fetch(`${API_BASE_URL}/api/analytics/stats`, { headers: { Authorization: `Bearer ${token}` } }).then((res) => {
     if (!res.ok) throw new Error(`GET /api/analytics/stats failed: ${res.status}`)
     return res.json() as Promise<AnalyticsStatsResponse>
+  })
+
+// Tool Tracer — proxied through the Gateway to portfolio-microservices/tools-service.
+// Request/response bodies stay snake_case (see types/index.ts) to match that service's wire
+// format directly, rather than translating a byte-for-byte forwarding proxy's JSON.
+
+export const calibrateRectify = (
+  imageB64: string,
+  corners: PixelPoint[],
+  widthMm: number,
+  heightMm: number,
+  targetPxPerMm = 6,
+) =>
+  postJson<RectifyResponse>('/api/tools/calibrate/rectify', {
+    image_b64: imageB64,
+    corners,
+    width_mm: widthMm,
+    height_mm: heightMm,
+    target_px_per_mm: targetPxPerMm,
+  })
+
+export const segmentPreviewMagicWand = (imageB64: string, seeds: PixelPoint[], tolerance: number) =>
+  postJson<MaskPreviewResponse>('/api/tools/segment/preview/magicwand', {
+    method: 'magicwand',
+    image_b64: imageB64,
+    seeds,
+    tolerance,
+  })
+
+export const segmentIslands = (
+  imageB64: string,
+  seeds: PixelPoint[],
+  tolerance: number,
+  pxPerMm: number,
+) =>
+  postJson<IslandsResponse>('/api/tools/segment/islands', {
+    method: 'magicwand',
+    image_b64: imageB64,
+    seeds,
+    tolerance,
+    px_per_mm: pxPerMm,
+  })
+
+export const segmentFinalize = (
+  imageB64: string,
+  seeds: PixelPoint[],
+  tolerance: number,
+  pxPerMm: number,
+  padMm: number,
+  includeIds: number[],
+) =>
+  postJson<FinalizeResponse>('/api/tools/segment/finalize', {
+    method: 'magicwand',
+    image_b64: imageB64,
+    seeds,
+    tolerance,
+    px_per_mm: pxPerMm,
+    pad_mm: padMm,
+    include_ids: includeIds,
+  })
+
+export const meshFromPockets = (
+  tools: { mask_png_b64: string; pocket_depth_mm: number }[],
+  blockThicknessMm: number,
+  pxPerMm: number,
+  maxMeshDim: number,
+) =>
+  postJson<MeshResponse>('/api/tools/mesh/from_pockets', {
+    tools,
+    block_thickness_mm: blockThicknessMm,
+    px_per_mm: pxPerMm,
+    max_mesh_dim: maxMeshDim,
   })
 
 export const submitContactForm = async (payload: {

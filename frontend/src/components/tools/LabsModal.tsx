@@ -2,14 +2,14 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Box, Scan, X, type LucideIcon } from 'lucide-react'
 import { lazy, Suspense, type ReactElement } from 'react'
 import { useLabsStore } from '../../store/useLabsStore'
-import { DxfTool } from './DxfTool'
 
-// three.js + @react-three pull in a large chunk — only fetched once this tool is actually opened.
+// three.js + @react-three pull in a large chunk — only fetched once a tool that needs it opens.
 const Mesh3DTool = lazy(() => import('./Mesh3DTool').then((m) => ({ default: m.Mesh3DTool })))
+const ToolTracer = lazy(() => import('./tooltracer/ToolTracer').then((m) => ({ default: m.ToolTracer })))
 
 const TOOLS: { id: string; label: string; icon: LucideIcon; render: () => ReactElement }[] = [
   { id: 'mesh3d', label: '3D Mesh Generator', icon: Box, render: () => <Mesh3DTool /> },
-  { id: 'dxf', label: 'DXF Contour Tracer', icon: Scan, render: () => <DxfTool /> },
+  { id: 'tooltracer', label: 'Tool Tracer', icon: Scan, render: () => <ToolTracer /> },
 ]
 
 export function LabsModal() {
