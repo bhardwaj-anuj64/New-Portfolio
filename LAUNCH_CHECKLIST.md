@@ -41,6 +41,14 @@ Everything below reads as specific, plausible professional content, but it was w
 
 The homelab server (`portfolio-docker` VM on Proxmox) now exists and is live at `anujb.dev`, so these four are no longer blocked on infrastructure — the remaining work is wiring the code itself to real Docker/Proxmox metrics, or relabeling this section as illustrative.
 
+## Microservice Playground — real backbone
+
+`portfolio-microservices/tools-service/` is a single FastAPI/OpenCV container hosting three logically distinct backends — Segmentation & Outline, Tonal-Banding/Depth, and Mesh Generator — consolidated into one container because the homelab VM (2 vCPU / 3GB RAM, already running the Gateway, frontend, and cloudflared) doesn't have the headroom for three separate Python runtimes that won't scale independently. Full architecture writeup, endpoint reference, frontend flow design, and known bugs/learnings live in `portfolio-microservices/knowledge/`.
+
+- [x] Containerized (`Dockerfile`), wired into `docker-compose.yml`/`docker-compose.prod.yml` as an internal-only `tools` service, built/pushed in CI (`.github/workflows/deploy.yml`), and reachable from the Gateway via `ToolsProxyController` (`/api/tools/**`).
+- [ ] Nothing consumes it yet — this pass was infra-only. The two real frontend demos per `portfolio-microservices/knowledge/01-overview.md` are **Keychain Generator** and **Tool Tracer** (Mesh Generator is shared backend infra, not its own demo tab — don't reintroduce a third demo tab without checking with the project owner first).
+- [ ] Today's `Mesh3DTool.tsx` ("3D Mesh Generator", still backed by the random-heightmap mock in `JobQueueService.cs` noted above) and `DxfTool.tsx` ("DXF Contour Tracer", still client-side-only Sobel edge detection) are legacy prototypes, untouched by this pass. Retiring them in favor of the real Keychain Generator / Tool Tracer flows is separate follow-on work.
+
 ## Site analytics
 
 - [x] `AnalyticsController.cs` / `AnalyticsService.cs` — real page-view counter, resume-download counter, and a capped (50-entry) client-error log, persisted to `data/site-stats.json` in the same volume as push subscriptions. Wired into the admin dashboard (`AdminPortalModal.tsx` → `SiteAnalytics`). No third-party analytics service used — in line with the homelab/self-hosted approach.

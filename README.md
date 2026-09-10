@@ -40,10 +40,15 @@ backend/Gateway/
   Services/           business logic behind each controller (analytics, email, push, job queue)
   Hubs/                JobHub.cs — SignalR hub for async job progress/results
   Models/              request/response DTOs
+portfolio-microservices/
+  tools-service/      FastAPI + OpenCV, one container: segmentation, tonal-banding, mesh generation
+  knowledge/            architecture writeup, endpoint reference, frontend flow design, known bugs
 docker-compose.yml         local dev / builds images from source
 docker-compose.prod.yml    production — pulls versioned images from GHCR
 .github/workflows/deploy.yml
 ```
+
+`portfolio-microservices/tools-service/` is the shared backbone for two planned "Microservice Playground" demos — Keychain Generator and Tool Tracer (Mesh Generator is shared infra, not a demo of its own) — reachable from the Gateway at `/api/tools/**`. See [LAUNCH_CHECKLIST.md](./LAUNCH_CHECKLIST.md) for what's wired vs. still mocked, and `portfolio-microservices/knowledge/` for the full design.
 
 ## Getting started (local dev)
 
@@ -96,6 +101,7 @@ All routes are under `/api`, prefixed by controller area:
 | `analytics` | `POST /api/analytics/pageview`, `/resume-download`, `/error`, `GET /api/analytics/stats` | Beacon-style write endpoints are public; `stats` (read) requires a JWT. Page views are deduplicated to unique visitors via a client-persisted visitor id. |
 | `admin/challenge` | `POST /generate`, `POST /verify`, `GET /vapid-public-key`, `POST /subscribe` | OTP challenge/response admin login, with optional Web Push approval on a second device |
 | `admin/homeassistant` | `GET /{**path}` | Authenticated reverse proxy to a Home Assistant instance |
+| `tools` | `GET`/`POST /api/tools/{**path}` | Public reverse proxy to the `tools` service (segmentation, tonal-banding, mesh generation) |
 | `jobs` | `POST /api/jobs/stl`, `GET /api/jobs/stl/{jobId}` | Kicks off an async job; progress/results also stream over the `/hubs/jobs` SignalR hub |
 | `system` | `GET /api/system/health`, `GET /api/system/telemetry` | Liveness + basic process metrics |
 

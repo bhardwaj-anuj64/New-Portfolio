@@ -9,6 +9,7 @@ services:
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env, e.g. https://anujb.dev}
       HomeAssistant__BaseUrl: ${HOME_ASSISTANT_BASE_URL:-http://homeassistant.local:8123}
       HomeAssistant__LongLivedToken: ${HOME_ASSISTANT_TOKEN:-}
+      Tools__BaseUrl: ${TOOLS_BASE_URL:-http://tools:8000}
       WebPush__VapidSubject: ${VAPID_SUBJECT:-mailto:bhardwaj.anuj64@gmail.com}
       WebPush__VapidPublicKey: ${VAPID_PUBLIC_KEY:-}
       WebPush__VapidPrivateKey: ${VAPID_PRIVATE_KEY:-}
@@ -18,6 +19,17 @@ services:
       # Persists push subscriptions across redeploys — everything else in the gateway is
       # deliberately in-memory (OTP challenges are 60s-lived, job results are transient).
       - gateway-data:/app/data
+    depends_on:
+      - tools
+    networks:
+      - portfolio-network
+    restart: unless-stopped
+
+  # Segmentation, tonal-banding, and mesh-generation, consolidated into one
+  # container (see portfolio-microservices/knowledge/) — internal only, the
+  # Gateway is the only thing that talks to it.
+  tools:
+    image: ghcr.io/${GHCR_NAMESPACE}/tools:${IMAGE_TAG:-latest}
     networks:
       - portfolio-network
     restart: unless-stopped

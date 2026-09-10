@@ -10,6 +10,18 @@ services:
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
       HomeAssistant__BaseUrl: ${HOME_ASSISTANT_BASE_URL:-http://homeassistant.local:8123}
       HomeAssistant__LongLivedToken: ${HOME_ASSISTANT_TOKEN:-}
+      Tools__BaseUrl: ${TOOLS_BASE_URL:-http://tools:8000}
+    depends_on:
+      - tools
+    networks:
+      - portfolio-network
+
+  # Segmentation, tonal-banding, and mesh-generation, consolidated into one
+  # container (see portfolio-microservices/knowledge/) — internal only, the
+  # Gateway is the only thing that talks to it.
+  tools:
+    build:
+      context: ./portfolio-microservices/tools-service
     networks:
       - portfolio-network
 
