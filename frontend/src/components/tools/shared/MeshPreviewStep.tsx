@@ -1,7 +1,9 @@
 import { OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
-import { Download, RotateCw } from 'lucide-react'
+import { Download, RotateCw, ZoomIn, ZoomOut } from 'lucide-react'
+import { useRef } from 'react'
 import { DoubleSide, type BufferGeometry } from 'three'
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 
 interface MeshPreviewStepProps {
   geometry: BufferGeometry | null
@@ -70,7 +72,19 @@ export function MeshPreviewControls({
   )
 }
 
+const ZOOM_IN_FACTOR = 0.8
+const ZOOM_OUT_FACTOR = 1.25
+
 export function MeshPreviewViewer({ geometry, wireframe, autoRotate, loading }: MeshPreviewStepProps) {
+  const controlsRef = useRef<OrbitControlsImpl>(null)
+
+  function zoom(factor: number) {
+    const controls = controlsRef.current
+    if (!controls) return
+    controls.object.position.sub(controls.target).multiplyScalar(factor).add(controls.target)
+    controls.update()
+  }
+
   return (
     <div className="relative h-full min-h-[280px] w-full overflow-hidden rounded-lg bg-black/40">
       <Canvas camera={{ position: [8, 8, 8], fov: 45 }}>
@@ -81,8 +95,27 @@ export function MeshPreviewViewer({ geometry, wireframe, autoRotate, loading }: 
             <meshStandardMaterial color="#4ade80" wireframe={wireframe} side={DoubleSide} />
           </mesh>
         )}
-        <OrbitControls autoRotate={autoRotate} autoRotateSpeed={2} />
+        <OrbitControls ref={controlsRef} autoRotate={autoRotate} autoRotateSpeed={2} />
       </Canvas>
+
+      {geometry && (
+        <div className="absolute bottom-2 right-2 flex flex-col gap-1">
+          <button
+            onClick={() => zoom(ZOOM_IN_FACTOR)}
+            aria-label="Zoom in"
+            className="rounded-full bg-black/60 p-1.5 text-white/70 transition-colors hover:bg-black/80 hover:text-white"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => zoom(ZOOM_OUT_FACTOR)}
+            aria-label="Zoom out"
+            className="rounded-full bg-black/60 p-1.5 text-white/70 transition-colors hover:bg-black/80 hover:text-white"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-sm text-white">
