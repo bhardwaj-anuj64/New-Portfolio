@@ -12,11 +12,11 @@ import {
 import type { ContourOut, IslandOut, PixelPoint, PocketTool, ToolTracerStep } from '../../../types'
 import { ToolShell } from '../ToolShell'
 import { CalibrationControls, CalibrationPreview } from './CalibrationStep'
-import { buildToolTracerDxf } from './dxfExport'
-import { base64ToDataUrl, downscaleToBase64, fileToImage, loadImageFromDataUrl } from './imageUtils'
+import { buildDxfFromContours } from '../shared/dxfExport'
+import { base64ToDataUrl, downscaleToBase64, fileToImage, loadImageFromDataUrl } from '../shared/imageUtils'
 import { IslandReviewControls, IslandReviewPreview } from './IslandReviewStep'
 import { groupContoursByTool, rasterizeToolMask } from './maskRasterize'
-import { MeshPreviewControls, MeshPreviewViewer } from './MeshPreviewStep'
+import { MeshPreviewControls, MeshPreviewViewer } from '../shared/MeshPreviewStep'
 import { OrganizerControls, OrganizerPreview } from './OrganizerStep'
 import { SegmentationControls, SegmentationPreview } from './SegmentationStep'
 
@@ -254,7 +254,7 @@ export function ToolTracer() {
 
   function handleExportDxf() {
     if (!finalContours) return
-    downloadBlob(buildToolTracerDxf(finalContours), 'tool-outlines.dxf', 'application/dxf')
+    downloadBlob(buildDxfFromContours(finalContours), 'tool-outlines.dxf', 'application/dxf')
   }
 
   function goBack() {

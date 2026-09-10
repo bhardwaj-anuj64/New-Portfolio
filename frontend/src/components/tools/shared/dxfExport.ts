@@ -22,7 +22,7 @@ function writeClosedPolyline(out: string[], points: [number, number][]) {
 }
 
 /** Builds a DXF from mm-space contour polygons (outlines + holes) returned by /segment/finalize. */
-export function buildToolTracerDxf(contours: ContourOut[]): string {
+export function buildDxfFromContours(contours: ContourOut[]): string {
   const out: string[] = []
   push(out, 0, 'SECTION')
   push(out, 2, 'ENTITIES')

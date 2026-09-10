@@ -1,5 +1,5 @@
 import type { PocketTool } from '../../../types'
-import { base64ToDataUrl } from './imageUtils'
+import { base64ToDataUrl } from '../shared/imageUtils'
 
 interface OrganizerStepProps {
   pockets: PocketTool[]

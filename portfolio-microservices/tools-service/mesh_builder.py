@@ -128,6 +128,100 @@ def build_heightfield_solid(depth_map_mm: np.ndarray, px_per_mm: float) -> Mesh:
     return Mesh(vertices=vertices.astype(np.float32), faces=np.array(faces, dtype=np.int32))
 
 
+def build_masked_heightfield_solid(depth_map_mm: np.ndarray, mask: np.ndarray, px_per_mm: float) -> Mesh:
+    """
+    Like build_heightfield_solid, but only extrudes cells where `mask` says "inside" (>0) —
+    front/back quads are only emitted for a cell whose all 4 corners are foreground, and a side
+    wall is stitched along every edge between an inside cell and an outside one (mask 0,
+    INCLUDING the grid boundary — the 4 rectangle edges are just a special case of this).
+
+    This is what lets a mesh follow an arbitrary silhouette (e.g. a Keychain subject's outline)
+    instead of always being a rectangle, and it handles interior holes for free: punching a
+    mask=0 region anywhere — at the edge or in the interior — gets walled off exactly the same
+    way, which is how a keyring hole gets modeled (punch it into the mask before calling this,
+    no special-case hole code needed).
+
+    mask must be the same pixel shape as depth_map_mm.
+    """
+    rows, cols = depth_map_mm.shape[:2]
+    if rows < 2 or cols < 2:
+        raise ValueError("depth map must be at least 2x2 to build a mesh")
+    if mask.shape[:2] != (rows, cols):
+        raise ValueError("mask must be the same shape as depth_map_mm")
+
+    xs = np.arange(cols, dtype=np.float32) / px_per_mm
+    ys = (rows - 1 - np.arange(rows, dtype=np.float32)) / px_per_mm  # flip Y: row 0 = back of image = max Y
+
+    grid_x, grid_y = np.meshgrid(xs, ys)  # each (rows, cols)
+
+    front_z = depth_map_mm.astype(np.float32)
+    front_verts = np.stack([grid_x, grid_y, front_z], axis=-1).reshape(-1, 3)
+    back_verts = np.stack([grid_x, grid_y, np.zeros_like(front_z)], axis=-1).reshape(-1, 3)
+
+    n_grid = rows * cols
+    vertices = np.concatenate([front_verts, back_verts], axis=0)
+
+    def front_idx(r, c):
+        return r * cols + c
+
+    def back_idx(r, c):
+        return n_grid + r * cols + c
+
+    inside = mask > 0
+    # A cell is only "inside" if ALL 4 of its corners are foreground — the simplest rule that
+    # guarantees no degenerate quads straddling the boundary.
+    cell_inside = inside[:-1, :-1] & inside[:-1, 1:] & inside[1:, :-1] & inside[1:, 1:]
+
+    faces = []
+
+    for r in range(rows - 1):
+        for c in range(cols - 1):
+            if not cell_inside[r, c]:
+                continue
+            a, b = front_idx(r, c), front_idx(r, c + 1)
+            d, e = front_idx(r + 1, c), front_idx(r + 1, c + 1)
+            faces.append((a, d, b))
+            faces.append((b, d, e))
+
+            ba, bb = back_idx(r, c), back_idx(r, c + 1)
+            bd, be = back_idx(r + 1, c), back_idx(r + 1, c + 1)
+            faces.append((ba, bb, bd))
+            faces.append((bb, be, bd))
+
+    def add_wall(front_a, front_b, back_a, back_b):
+        faces.append((front_a, back_a, front_b))
+        faces.append((front_b, back_a, back_b))
+
+    # Side walls: for every inside cell, wall off any of its 4 edges that border an outside
+    # cell (mask says so, or the grid boundary). Winding per direction matches
+    # build_heightfield_solid's 4 rectangle-edge case exactly, just applied per-cell instead of
+    # only at the grid extremes — same "-r/+r/-c/+c direction" convention either way.
+    for r in range(rows - 1):
+        for c in range(cols - 1):
+            if not cell_inside[r, c]:
+                continue
+
+            if r == 0 or not cell_inside[r - 1, c]:  # toward -r ("top")
+                add_wall(front_idx(r, c), front_idx(r, c + 1), back_idx(r, c), back_idx(r, c + 1))
+            if r == rows - 2 or not cell_inside[r + 1, c]:  # toward +r ("bottom")
+                add_wall(
+                    front_idx(r + 1, c + 1), front_idx(r + 1, c),
+                    back_idx(r + 1, c + 1), back_idx(r + 1, c),
+                )
+            if c == 0 or not cell_inside[r, c - 1]:  # toward -c ("left")
+                add_wall(front_idx(r + 1, c), front_idx(r, c), back_idx(r + 1, c), back_idx(r, c))
+            if c == cols - 2 or not cell_inside[r, c + 1]:  # toward +c ("right")
+                add_wall(
+                    front_idx(r, c + 1), front_idx(r + 1, c + 1),
+                    back_idx(r, c + 1), back_idx(r + 1, c + 1),
+                )
+
+    if not faces:
+        raise ValueError("mask has no foreground region large enough to build a mesh")
+
+    return Mesh(vertices=vertices.astype(np.float32), faces=np.array(faces, dtype=np.int32))
+
+
 def check_manifold(mesh: Mesh) -> dict:
     """
     Sanity check: in a watertight manifold mesh, every EDGE must be shared

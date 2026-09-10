@@ -1,5 +1,5 @@
 import type { IslandOut } from '../../../types'
-import { base64ToDataUrl } from './imageUtils'
+import { base64ToDataUrl } from '../shared/imageUtils'
 
 interface IslandReviewStepProps {
   islands: IslandOut[]

@@ -174,6 +174,29 @@ export interface PocketTool {
   pocketDepthMm: number
 }
 
+// ---------------------------------------------------------------------------
+// Keychain Generator (Tonal-Banding proxy calls, /api/tools/band/**). Same
+// snake_case wire-format note as above.
+// ---------------------------------------------------------------------------
+
+export interface BandPreviewResponse {
+  band_map_png_b64: string
+  shaded_preview_png_b64: string
+  band_thresholds: number[]
+  band_depths_mm: number[]
+}
+
+export interface BandFinalizeResponse {
+  depth_map_png_b64: string
+  depth_scale: number
+  band_thresholds: number[]
+  band_depths_mm: number[]
+  width: number
+  height: number
+}
+
+export type KeychainStep = 'upload' | 'segment' | 'band' | 'assemble' | 'preview'
+
 export interface QualificationMilestone {
   id: string
   type: 'degree' | 'certification'

@@ -1,15 +1,19 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Box, Scan, X, type LucideIcon } from 'lucide-react'
+import { Box, Key, Scan, X, type LucideIcon } from 'lucide-react'
 import { lazy, Suspense, type ReactElement } from 'react'
 import { useLabsStore } from '../../store/useLabsStore'
 
 // three.js + @react-three pull in a large chunk — only fetched once a tool that needs it opens.
 const Mesh3DTool = lazy(() => import('./Mesh3DTool').then((m) => ({ default: m.Mesh3DTool })))
 const ToolTracer = lazy(() => import('./tooltracer/ToolTracer').then((m) => ({ default: m.ToolTracer })))
+const KeychainGenerator = lazy(() =>
+  import('./keychain/KeychainGenerator').then((m) => ({ default: m.KeychainGenerator })),
+)
 
 const TOOLS: { id: string; label: string; icon: LucideIcon; render: () => ReactElement }[] = [
   { id: 'mesh3d', label: '3D Mesh Generator', icon: Box, render: () => <Mesh3DTool /> },
   { id: 'tooltracer', label: 'Tool Tracer', icon: Scan, render: () => <ToolTracer /> },
+  { id: 'keychain', label: 'Keychain Generator', icon: Key, render: () => <KeychainGenerator /> },
 ]
 
 export function LabsModal() {

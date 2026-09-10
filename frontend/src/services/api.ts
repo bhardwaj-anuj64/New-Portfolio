@@ -1,5 +1,8 @@
 import type {
   AnalyticsStatsResponse,
+  BandFinalizeResponse,
+  BandPreviewResponse,
+  BboxPx,
   ContactResponse,
   FinalizeResponse,
   HealthResponse,
@@ -202,6 +205,84 @@ export const meshFromPockets = (
     block_thickness_mm: blockThicknessMm,
     px_per_mm: pxPerMm,
     max_mesh_dim: maxMeshDim,
+  })
+
+// Keychain Generator — grabcut segmentation, tonal banding, and the silhouette mesh, all
+// proxied through the same Gateway route as Tool Tracer's calls above.
+
+export const segmentPreviewGrabCut = (
+  imageB64: string,
+  bbox: BboxPx,
+  fgHints: PixelPoint[],
+  bgHints: PixelPoint[],
+) =>
+  postJson<MaskPreviewResponse>('/api/tools/segment/preview/grabcut', {
+    method: 'grabcut',
+    image_b64: imageB64,
+    bbox,
+    fg_hints: fgHints,
+    bg_hints: bgHints,
+  })
+
+export const segmentFinalizeGrabCut = (
+  imageB64: string,
+  bbox: BboxPx,
+  fgHints: PixelPoint[],
+  bgHints: PixelPoint[],
+  pxPerMm: number,
+  padMm: number,
+) =>
+  postJson<FinalizeResponse>('/api/tools/segment/finalize', {
+    method: 'grabcut',
+    image_b64: imageB64,
+    bbox,
+    fg_hints: fgHints,
+    bg_hints: bgHints,
+    px_per_mm: pxPerMm,
+    pad_mm: padMm,
+  })
+
+export const bandPreview = (
+  imageB64: string,
+  numBands: number,
+  minDepthMm: number,
+  maxDepthMm: number,
+) =>
+  postJson<BandPreviewResponse>('/api/tools/band/preview', {
+    image_b64: imageB64,
+    num_bands: numBands,
+    min_depth_mm: minDepthMm,
+    max_depth_mm: maxDepthMm,
+  })
+
+export const bandFinalize = (
+  imageB64: string,
+  numBands: number,
+  minDepthMm: number,
+  maxDepthMm: number,
+) =>
+  postJson<BandFinalizeResponse>('/api/tools/band/finalize', {
+    image_b64: imageB64,
+    num_bands: numBands,
+    min_depth_mm: minDepthMm,
+    max_depth_mm: maxDepthMm,
+  })
+
+export const meshFromSilhouette = (
+  maskB64: string,
+  pxPerMm: number,
+  maxMeshDim: number,
+  depthMapB64: string | null,
+  depthScale: number | null,
+  flatThicknessMm: number,
+) =>
+  postJson<MeshResponse>('/api/tools/mesh/from_silhouette', {
+    mask_png_b64: maskB64,
+    px_per_mm: pxPerMm,
+    max_mesh_dim: maxMeshDim,
+    depth_map_png_b64: depthMapB64,
+    depth_scale: depthScale,
+    flat_thickness_mm: flatThicknessMm,
   })
 
 export const submitContactForm = async (payload: {

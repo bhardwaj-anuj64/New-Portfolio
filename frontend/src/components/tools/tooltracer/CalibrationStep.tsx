@@ -1,7 +1,7 @@
 import { RotateCcw } from 'lucide-react'
 import type { MouseEvent } from 'react'
 import type { PixelPoint } from '../../../types'
-import { clickToPixel } from './imageUtils'
+import { clickToPixel } from '../shared/imageUtils'
 
 const CORNER_LABELS = ['Top-left', 'Top-right', 'Bottom-right', 'Bottom-left']
 

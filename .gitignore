@@ -3,3 +3,4 @@
 .DS_Store
 Thumbs.db
 backend/Gateway/data/
+__pycache__/
