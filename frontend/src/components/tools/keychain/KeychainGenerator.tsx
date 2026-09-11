@@ -12,7 +12,7 @@ import {
 import type { BboxPx, ContourOut, KeychainStep, PixelPoint } from '../../../types'
 import { buildDxfFromContours } from '../shared/dxfExport'
 import { base64ToDataUrl, downscaleToBase64, fileToImage } from '../shared/imageUtils'
-import { MeshPreviewControls, MeshPreviewViewer } from '../shared/MeshPreviewStep'
+import { BuildingOverlay, MeshPreviewControls, MeshPreviewViewer } from '../shared/MeshPreviewStep'
 import { ToolShell } from '../ToolShell'
 import { AssemblyControls } from './AssemblyStep'
 import { rasterizeKeychainMask } from './keychainMask'
@@ -341,12 +341,15 @@ export function KeychainGenerator() {
       </div>
     )
     rightPane = (
-      <div className="flex h-full min-h-[280px] items-center justify-center overflow-hidden rounded-lg bg-black/40">
+      <div className="relative h-full min-h-[280px] overflow-hidden rounded-lg bg-black/40">
         {bandShadedB64 ? (
           <img src={base64ToDataUrl(bandShadedB64)} alt="Relief preview" className="h-full w-full object-contain opacity-70" />
         ) : (
-          <p className="text-sm text-white/40">Adjust settings, then preview the mesh.</p>
+          <div className="flex h-full items-center justify-center">
+            <p className="text-sm text-white/40">Adjust settings, then preview the mesh.</p>
+          </div>
         )}
+        <BuildingOverlay active={loading} />
       </div>
     )
   } else if (step === 'preview') {

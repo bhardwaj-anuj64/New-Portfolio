@@ -210,6 +210,22 @@ def _smooth_mask(mask: np.ndarray) -> np.ndarray:
     return mask
 
 
+def _find_labeled_contours(mask: np.ndarray) -> tuple[list, np.ndarray | None]:
+    """
+    The ONE place that turns a mask into (contours, hierarchy). get_top_level_islands and
+    extract_contours both call this on the same smoothed-but-unpadded mask, so a contour's
+    index here — its id — means the same blob whichever function asks for it. Padding must
+    never factor into this: growing/shrinking the whole mask before findContours can merge
+    or split blobs and silently renumber everything after, which is exactly what used to
+    desync an island id chosen in the review step from the finalize call built on it (a
+    stray fragment could get built instead of the real tool, or nothing would survive at
+    all). Padding is applied per-contour, after ids are assigned — see extract_contours.
+    """
+    smoothed = _smooth_mask(mask.copy())
+    contours, hierarchy = cv2.findContours(smoothed, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    return contours, (hierarchy[0] if hierarchy is not None else None)
+
+
 def get_top_level_islands(
     mask: np.ndarray,
     px_per_mm: float,
@@ -219,14 +235,12 @@ def get_top_level_islands(
     List only the top-level (outer) blobs — i.e. candidate individual tools —
     for a selection UI, restoring the tool tracer's original 'click to
     include/exclude' step that got dropped when this became a stateless
-    service. Same RETR_CCOMP call/mask as extract_contours, so ids line up
-    between a call to this and a subsequent extract_contours/finalize call
-    on the same mask.
+    service. Ids come from _find_labeled_contours, the same id-assignment
+    extract_contours/finalize uses on the same mask, so they line up.
     """
-    contours, hierarchy = cv2.findContours(mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = _find_labeled_contours(mask)
     if hierarchy is None:
         return []
-    hierarchy = hierarchy[0]
 
     islands: list[Island] = []
     for idx, (cnt, h) in enumerate(zip(contours, hierarchy)):
@@ -238,6 +252,21 @@ def get_top_level_islands(
         x, y, w, ht = cv2.boundingRect(cnt)
         islands.append(Island(id=idx, bbox_px=(x, y, w, ht), area_mm2=area / (px_per_mm ** 2)))
     return islands
+
+
+def _pad_single_contour(cnt: np.ndarray, pad_px: int, is_hole: bool, shape: tuple[int, int]) -> np.ndarray:
+    """
+    Grows (outer) or shrinks (hole) exactly one contour, in isolation — dilating/eroding
+    only this blob's own filled mask rather than the whole image's outer/hole layers, so
+    padding can never bleed into or merge with a neighboring blob the way padding the full
+    mask at once could.
+    """
+    isolated = np.zeros(shape, np.uint8)
+    cv2.drawContours(isolated, [cnt], -1, 255, -1)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (pad_px * 2 + 1, pad_px * 2 + 1))
+    isolated = cv2.erode(isolated, kernel) if is_hole else cv2.dilate(isolated, kernel)
+    padded_contours, _ = cv2.findContours(isolated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    return max(padded_contours, key=cv2.contourArea) if padded_contours else cnt
 
 
 def extract_contours(
@@ -253,21 +282,17 @@ def extract_contours(
     Padding is hole-aware: positive pad_mm grows outer contours (clearance /
     print fitment) and SHRINKS hole contours (so friction fit doesn't go
     loose) — dilating an outer boundary and eroding an inner one are both
-    "add pad_mm of material," which is the physically correct behavior.
+    "add pad_mm of material," which is the physically correct behavior. It's
+    applied per-contour, after ids/hierarchy come from the unpadded mask (see
+    _find_labeled_contours) — so pad_mm can never change which blob is which
+    id, only that blob's own returned geometry.
     """
-    pad_px = int(round(pad_mm * px_per_mm))
-
-    working_mask = _smooth_mask(mask.copy())
-    if pad_px > 0:
-        working_mask = _apply_hole_aware_padding(working_mask, pad_px)
-
-    raw_contours, hierarchy = cv2.findContours(
-        working_mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE
-    )
-
+    raw_contours, hierarchy = _find_labeled_contours(mask)
     if hierarchy is None:
         return []
-    hierarchy = hierarchy[0]  # cv2 wraps it in an extra dim
+
+    pad_px = int(round(pad_mm * px_per_mm))
+    shape = mask.shape[:2]
 
     results: list[Contour] = []
     for idx, (cnt, h) in enumerate(zip(raw_contours, hierarchy)):
@@ -278,8 +303,10 @@ def extract_contours(
         parent_idx = h[3]
         is_hole = parent_idx != -1  # has a parent -> it's a hole in RETR_CCOMP
 
-        peri = cv2.arcLength(cnt, True)
-        approx = cv2.approxPolyDP(cnt, simplify_eps_ratio * peri, True)
+        geom_cnt = _pad_single_contour(cnt, pad_px, is_hole, shape) if pad_px > 0 else cnt
+
+        peri = cv2.arcLength(geom_cnt, True)
+        approx = cv2.approxPolyDP(geom_cnt, simplify_eps_ratio * peri, True)
 
         points_mm = [
             (pt[0][0] / px_per_mm, -pt[0][1] / px_per_mm)  # invert Y for CAD convention
@@ -292,36 +319,11 @@ def extract_contours(
                 parent_id=parent_idx if parent_idx != -1 else None,
                 is_hole=is_hole,
                 points_mm=points_mm,
-                area_mm2=area / (px_per_mm ** 2),
+                area_mm2=cv2.contourArea(geom_cnt) / (px_per_mm ** 2),
             )
         )
 
     return results
-
-
-def _apply_hole_aware_padding(mask: np.ndarray, pad_px: int) -> np.ndarray:
-    """
-    Dilate outer boundaries, erode holes, by finding holes first (via a
-    hierarchy pass) and padding each region in the correct direction.
-    """
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (pad_px * 2 + 1, pad_px * 2 + 1))
-
-    contours, hierarchy = cv2.findContours(mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
-    if hierarchy is None:
-        return cv2.dilate(mask, kernel)
-    hierarchy = hierarchy[0]
-
-    outer_layer = np.zeros_like(mask)
-    hole_layer = np.zeros_like(mask)
-    for cnt, h in zip(contours, hierarchy):
-        target = hole_layer if h[3] != -1 else outer_layer
-        cv2.drawContours(target, [cnt], -1, 255, -1)
-
-    outer_grown = cv2.dilate(outer_layer, kernel)
-    hole_shrunk = cv2.erode(hole_layer, kernel)
-
-    # Final solid = grown outer region, minus the (now smaller) holes
-    return cv2.bitwise_and(outer_grown, cv2.bitwise_not(hole_shrunk))
 
 
 # ---------------------------------------------------------------------------

@@ -4,6 +4,7 @@ import { Download, RotateCw, ZoomIn, ZoomOut } from 'lucide-react'
 import { useRef } from 'react'
 import { DoubleSide, type BufferGeometry } from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
+import { useElapsedSeconds } from './useElapsedSeconds'
 
 interface MeshPreviewStepProps {
   geometry: BufferGeometry | null
@@ -75,6 +76,22 @@ export function MeshPreviewControls({
 const ZOOM_IN_FACTOR = 0.8
 const ZOOM_OUT_FACTOR = 1.25
 
+/** Full-panel "still working" overlay with a running elapsed-time counter — the tools-service
+ * runs on a small homelab VM, so a mesh build can take a while and a bare "Building…" label with
+ * no sense of how long is indistinguishable from a hang. */
+export function BuildingOverlay({ active, label = 'Building mesh…' }: { active: boolean; label?: string }) {
+  const seconds = useElapsedSeconds(active)
+  if (!active) return null
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/60 text-sm text-white">
+      <span>{label}</span>
+      <span className="text-xs text-white/50">
+        {seconds}s elapsed — this runs on a small homelab server, larger images take longer
+      </span>
+    </div>
+  )
+}
+
 export function MeshPreviewViewer({ geometry, wireframe, autoRotate, loading }: MeshPreviewStepProps) {
   const controlsRef = useRef<OrbitControlsImpl>(null)
 
@@ -117,11 +134,7 @@ export function MeshPreviewViewer({ geometry, wireframe, autoRotate, loading }: 
         </div>
       )}
 
-      {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-sm text-white">
-          Building mesh…
-        </div>
-      )}
+      <BuildingOverlay active={loading} />
 
       {!geometry && !loading && (
         <div className="absolute inset-0 flex items-center justify-center text-sm text-white/40">

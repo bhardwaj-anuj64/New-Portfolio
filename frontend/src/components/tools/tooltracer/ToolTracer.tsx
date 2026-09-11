@@ -16,7 +16,7 @@ import { buildDxfFromContours } from '../shared/dxfExport'
 import { base64ToDataUrl, downscaleToBase64, fileToImage, loadImageFromDataUrl } from '../shared/imageUtils'
 import { IslandReviewControls, IslandReviewPreview } from './IslandReviewStep'
 import { groupContoursByTool, rasterizeToolMask } from './maskRasterize'
-import { MeshPreviewControls, MeshPreviewViewer } from '../shared/MeshPreviewStep'
+import { BuildingOverlay, MeshPreviewControls, MeshPreviewViewer } from '../shared/MeshPreviewStep'
 import { OrganizerControls, OrganizerPreview } from './OrganizerStep'
 import { SegmentationControls, SegmentationPreview } from './SegmentationStep'
 
@@ -376,7 +376,12 @@ export function ToolTracer() {
         <OrganizerControls {...props} />
       </div>
     )
-    rightPane = <OrganizerPreview {...props} />
+    rightPane = (
+      <div className="relative min-h-[280px] rounded-lg bg-black/40 p-2">
+        <OrganizerPreview {...props} />
+        <BuildingOverlay active={loading} />
+      </div>
+    )
   } else if (step === 'preview') {
     const props = {
       geometry,
