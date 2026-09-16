@@ -17,7 +17,7 @@ Generator = shared backend, not a demo) is the settled decision.
 
 ---
 
-## Demo 1: Keychain Generator
+## Demo 1: Keychain Holder
 
 **Concept:** upload a photo (a pet, a face, a flat object) → get a
 physical keychain combining outline-based shape with tonal-relief detail.

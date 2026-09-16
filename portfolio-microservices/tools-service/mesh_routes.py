@@ -2,11 +2,13 @@
 Mesh Generator routes.
 
 Shared 2D-to-3D geometry/preview backend, consumed by BOTH frontend demos:
-  - Keychain: /mesh/from_silhouette (the assembled piece — border-padded
-    subject outline, extruded to its own silhouette rather than a
-    rectangle, with an optional tonal-band relief interior and an optional
-    keyring hole) and /mesh/from_depth_map (a plain rectangular lithophane
-    tile, kept for standalone depth-map-to-mesh use)
+  - Keychain Holder: /mesh/from_silhouette (a wall-mounted plaque — subject
+    outline with an optional tonal-band relief interior, a thin raised
+    picture-frame rim, and a hanger bar with round mounting holes along the
+    bottom edge for separate, swappable screw-in hooks, see
+    mesh_builder.build_holder_mask_and_depth) and /mesh/from_depth_map (a
+    plain rectangular lithophane tile, kept for standalone depth-map-to-mesh
+    use)
   - Tool Tracer: /mesh/from_pockets (holder/organizer, per-tool recessed
     pockets from the Segmentation routes' island masks)
 
@@ -30,6 +32,7 @@ from pydantic import BaseModel
 
 from mesh_builder import (
     build_heightfield_solid,
+    build_holder_mask_and_depth,
     build_masked_heightfield_solid,
     build_pocket_depth_map,
     check_manifold,
@@ -140,16 +143,23 @@ def from_pockets(params: FromPocketsParams):
 
 
 # ---------------------------------------------------------------------------
-# /mesh/from_silhouette -- Keychain's assembled piece
+# /mesh/from_silhouette -- Keychain Holder's assembled piece
 # ---------------------------------------------------------------------------
 
 class FromSilhouetteParams(BaseModel):
-    mask_png_b64: str                      # border-padded subject silhouette; keyring hole (if
-                                            # any) already punched into it, built client-side
+    mask_png_b64: str                      # subject-only silhouette, unpadded (no rim/bar/holes
+                                            # baked in -- build_holder_mask_and_depth adds those)
     px_per_mm: float
     depth_map_png_b64: str | None = None   # from Tonal-Banding /band/finalize; omit for light-box off
     depth_scale: float | None = None       # required alongside depth_map_png_b64
     flat_thickness_mm: float = 4.0         # used instead of a depth map when light-box is off
+    border_width_mm: float = 2.0           # thin raised picture-frame rim around the subject
+    border_height_mm: float = 4.0          # flat height of the rim + hanger bar -- keep above the
+                                            # relief's own max depth so the rim actually reads as raised
+    bar_height_mm: float = 20.0            # hanger bar attached below the subject, holds the mounting holes
+    hook_count: int = 3                    # number of mounting holes for separate, swappable screw-in hooks
+    hole_diameter_mm: float = 3.5          # pilot-hole size for a small screw-in cup hook; size to the
+                                            # hook hardware actually being used, not a keyring
     max_mesh_dim: int = 250
 
 
@@ -168,16 +178,27 @@ def _downsample_paired(mask: np.ndarray, depth_map_mm: np.ndarray, max_mesh_dim:
 
 @router.post("/mesh/from_silhouette", response_model=MeshResponse)
 def from_silhouette(params: FromSilhouetteParams):
-    mask = _decode_mask_png(params.mask_png_b64)
+    inner_mask = _decode_mask_png(params.mask_png_b64)
 
     if params.depth_map_png_b64 is not None:
         if params.depth_scale is None:
             raise HTTPException(400, "depth_scale is required when depth_map_png_b64 is given")
-        depth_map_mm = _decode_depth_png(params.depth_map_png_b64, params.depth_scale)
-        if depth_map_mm.shape[:2] != mask.shape[:2]:
+        relief_depth_mm = _decode_depth_png(params.depth_map_png_b64, params.depth_scale)
+        if relief_depth_mm.shape[:2] != inner_mask.shape[:2]:
             raise HTTPException(400, "mask and depth map must be the same pixel size")
     else:
-        depth_map_mm = np.full(mask.shape[:2], params.flat_thickness_mm, dtype=np.float32)
+        relief_depth_mm = np.full(inner_mask.shape[:2], params.flat_thickness_mm, dtype=np.float32)
+
+    mask, depth_map_mm = build_holder_mask_and_depth(
+        inner_mask,
+        relief_depth_mm,
+        params.px_per_mm,
+        params.border_width_mm,
+        params.border_height_mm,
+        params.bar_height_mm,
+        params.hook_count,
+        params.hole_diameter_mm,
+    )
 
     small_mask, small_depth, px_per_mm = _downsample_paired(mask, depth_map_mm, params.max_mesh_dim, params.px_per_mm)
     mesh = build_masked_heightfield_solid(small_depth, small_mask, px_per_mm)

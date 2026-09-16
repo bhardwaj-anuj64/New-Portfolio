@@ -159,7 +159,7 @@ export interface PocketTool {
 }
 
 // ---------------------------------------------------------------------------
-// Keychain Generator (Tonal-Banding proxy calls, /api/tools/band/**). Same
+// Keychain Holder (Tonal-Banding proxy calls, /api/tools/band/**). Same
 // snake_case wire-format note as above.
 // ---------------------------------------------------------------------------
 

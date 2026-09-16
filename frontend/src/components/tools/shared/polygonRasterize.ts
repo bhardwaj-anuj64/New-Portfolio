@@ -1,8 +1,8 @@
 /**
  * Generic mm-polygon-to-mask-PNG rasterization, shared by Tool Tracer (per-tool pocket masks)
- * and Keychain Generator (silhouette + keyring-hole mask). Fills every subpath with the
- * `evenodd` rule in one pass, so any subpath after the first (a real hole, or a punched-in
- * keyring hole — geometrically the same thing to this function) cuts out of the ones before it.
+ * and Keychain Holder (subject silhouette mask). Fills every subpath with the `evenodd` rule in
+ * one pass, so any subpath after the first (a real hole in the traced geometry) cuts out of the
+ * ones before it.
  */
 
 function addSubpath(path: Path2D, points: [number, number][]) {

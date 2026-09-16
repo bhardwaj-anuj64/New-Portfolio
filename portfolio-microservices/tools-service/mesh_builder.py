@@ -279,6 +279,74 @@ def write_binary_stl(mesh: Mesh, name: bytes = b"mesh") -> bytes:
     return buf.getvalue()
 
 
+def build_holder_mask_and_depth(
+    inner_mask: np.ndarray,
+    relief_depth_mm: np.ndarray,
+    px_per_mm: float,
+    border_width_mm: float,
+    border_height_mm: float,
+    bar_height_mm: float,
+    hook_count: int,
+    hole_diameter_mm: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Composes the Keychain Holder's full piece -- a wall-mounted plaque, not a personal keychain
+    tag -- into one (mask, depth_map) pair ready for build_masked_heightfield_solid:
+      1. A thin raised picture-frame rim around the subject silhouette (dilate by
+         border_width_mm), flat at border_height_mm rather than following the photo's relief --
+         picture-frame edges don't take the photo's tone, and border_height_mm should read taller
+         than the relief's own max depth for the rim to actually look raised.
+      2. A hanger bar attached under the rim's bottom edge, same flat border_height_mm, spanning
+         the rim's full width, with hook_count evenly spaced round holes punched through it.
+
+    These holes are mounting/pilot holes, not the hook itself -- printed hook geometry (a curled
+    hook shape, or threads for a screw-in one) is unreliable at this scale on an FDM printer.
+    Instead each hole is sized to seat a separate, swappable hook: a small screw-in cup hook
+    self-taps directly into a snug pilot hole, or a slightly looser hole takes a threaded insert
+    for a machine-screw hook. Either way the actual hook is off-the-shelf hardware the builder
+    picks and can swap out, not something this tool models.
+
+    inner_mask / relief_depth_mm: the subject's own silhouette and its lithophane relief depth (or
+    a flat plate depth, light-box off), both at the photo's native pixel size, unpadded.
+
+    How the assembled plaque itself gets mounted to a wall (screws through the back, an adhesive
+    strip, a French cleat) is left to the builder -- not modeled here.
+    """
+    h, w = inner_mask.shape[:2]
+    border_px = max(1, int(round(border_width_mm * px_per_mm)))
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (border_px * 2 + 1, border_px * 2 + 1))
+    rim_mask = cv2.dilate(inner_mask, kernel)
+
+    ys, xs = np.where(rim_mask > 0)
+    if len(xs) == 0:
+        raise ValueError("subject silhouette is empty")
+    rim_x0, rim_x1 = int(xs.min()), int(xs.max())
+    rim_y1 = int(ys.max())
+    rim_w = rim_x1 - rim_x0 + 1
+
+    bar_h_px = max(1, int(round(bar_height_mm * px_per_mm)))
+    canvas_h = h + bar_h_px
+
+    final_mask = np.zeros((canvas_h, w), np.uint8)
+    final_mask[:h, :] = rim_mask
+
+    bar_y0, bar_y1 = rim_y1, min(canvas_h, rim_y1 + bar_h_px)
+    final_mask[bar_y0:bar_y1, rim_x0 : rim_x1 + 1] = 255
+
+    if hook_count > 0:
+        hole_r_px = max(1, int(round(hole_diameter_mm / 2 * px_per_mm)))
+        bar_mid_y = (bar_y0 + bar_y1) // 2
+        for i in range(hook_count):
+            cx = int(round(rim_x0 + rim_w * (i + 0.5) / hook_count))
+            cv2.circle(final_mask, (cx, bar_mid_y), hole_r_px, 0, -1)
+
+    depth_map = np.full((canvas_h, w), border_height_mm, dtype=np.float32)
+    inner_fg = inner_mask > 0
+    depth_map[:h, :][inner_fg] = relief_depth_mm[inner_fg]
+
+    return final_mask, depth_map
+
+
 def build_pocket_depth_map(
     island_masks: list,
     pocket_depths_mm: list,

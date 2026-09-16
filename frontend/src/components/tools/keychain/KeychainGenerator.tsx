@@ -15,7 +15,7 @@ import { base64ToDataUrl, downscaleToBase64, fileToImage } from '../shared/image
 import { BuildingOverlay, MeshPreviewControls, MeshPreviewViewer } from '../shared/MeshPreviewStep'
 import { ToolShell } from '../ToolShell'
 import { AssemblyControls } from './AssemblyStep'
-import { rasterizeKeychainMask } from './keychainMask'
+import { rasterizeSubjectMask } from './keychainMask'
 import { SegmentGrabcutControls, SegmentGrabcutPreview } from './SegmentGrabcutStep'
 import { TonalBandingControls, TonalBandingPreview } from './TonalBandingStep'
 
@@ -29,9 +29,7 @@ const STEP_LABELS: Record<KeychainStep, string> = {
 const STEP_ORDER: KeychainStep[] = ['upload', 'segment', 'band', 'assemble', 'preview']
 
 const UPLOAD_MAX_DIMENSION = 1200
-const TARGET_SIZE_MM = 60 // longest side of the finished keychain
-const KEYRING_DIAMETER_MM = 5
-const KEYRING_INSET_MM = 6
+const TARGET_SIZE_MM = 60 // longest side of the finished holder's subject plaque
 const PREVIEW_MESH_DIM = 150
 const EXPORT_MESH_DIM = 400
 const DEBOUNCE_MS = 200
@@ -81,9 +79,12 @@ export function KeychainGenerator() {
 
   // Assembly
   const [borderWidthMm, setBorderWidthMm] = useState(2)
+  const [borderHeightMm, setBorderHeightMm] = useState(4)
   const [lightBoxOn, setLightBoxOn] = useState(true)
   const [flatThicknessMm, setFlatThicknessMm] = useState(4)
-  const [keyringOn, setKeyringOn] = useState(true)
+  const [barHeightMm, setBarHeightMm] = useState(20)
+  const [hookCount, setHookCount] = useState(3)
+  const [holeDiameterMm, setHoleDiameterMm] = useState(3.5)
 
   // Mesh preview / export
   const [finalContours, setFinalContours] = useState<ContourOut[] | null>(null)
@@ -168,7 +169,7 @@ export function KeychainGenerator() {
     setLoading(true)
     setError(null)
     try {
-      const finalizeRes = await segmentFinalizeGrabCut(imageB64, bbox, fgHints, bgHints, pxPerMm, borderWidthMm)
+      const finalizeRes = await segmentFinalizeGrabCut(imageB64, bbox, fgHints, bgHints, pxPerMm, 0)
       setFinalContours(finalizeRes.contours)
 
       let depthMapB64: string | null = null
@@ -179,23 +180,26 @@ export function KeychainGenerator() {
         depthScale = bandRes.depth_scale
       }
 
-      const maskB64 = rasterizeKeychainMask(
-        finalizeRes.contours,
-        pxPerMm,
-        imageDims.width,
-        imageDims.height,
-        keyringOn ? { diameterMm: KEYRING_DIAMETER_MM, insetMm: KEYRING_INSET_MM } : null,
-      )
+      const maskB64 = rasterizeSubjectMask(finalizeRes.contours, pxPerMm, imageDims.width, imageDims.height)
       setFinalMeshInputs({ maskB64, depthMapB64, depthScale })
 
-      const meshRes = await meshFromSilhouette(maskB64, pxPerMm, PREVIEW_MESH_DIM, depthMapB64, depthScale, flatThicknessMm)
+      const meshRes = await meshFromSilhouette(maskB64, pxPerMm, PREVIEW_MESH_DIM, {
+        depthMapB64,
+        depthScale,
+        flatThicknessMm,
+        borderWidthMm,
+        borderHeightMm,
+        barHeightMm,
+        hookCount,
+        holeDiameterMm,
+      })
       const loaded = new STLLoader().parse(base64ToArrayBuffer(meshRes.stl_b64))
       loaded.center()
       setGeometry(loaded)
       setIsWatertight(meshRes.is_watertight)
       setStep('preview')
     } catch {
-      setError('Could not build the mesh preview. Try a wider border or a different bounding box.')
+      setError('Could not build the mesh preview. Try a different bounding box.')
     } finally {
       setLoading(false)
     }
@@ -206,15 +210,17 @@ export function KeychainGenerator() {
     setExportingStl(true)
     setError(null)
     try {
-      const meshRes = await meshFromSilhouette(
-        finalMeshInputs.maskB64,
-        pxPerMm,
-        EXPORT_MESH_DIM,
-        finalMeshInputs.depthMapB64,
-        finalMeshInputs.depthScale,
+      const meshRes = await meshFromSilhouette(finalMeshInputs.maskB64, pxPerMm, EXPORT_MESH_DIM, {
+        depthMapB64: finalMeshInputs.depthMapB64,
+        depthScale: finalMeshInputs.depthScale,
         flatThicknessMm,
-      )
-      downloadBlob(base64ToArrayBuffer(meshRes.stl_b64), 'keychain.stl', 'model/stl')
+        borderWidthMm,
+        borderHeightMm,
+        barHeightMm,
+        hookCount,
+        holeDiameterMm,
+      })
+      downloadBlob(base64ToArrayBuffer(meshRes.stl_b64), 'keychain-holder.stl', 'model/stl')
     } catch {
       setError('Export failed — try previewing again first.')
     } finally {
@@ -224,7 +230,7 @@ export function KeychainGenerator() {
 
   function handleExportDxf() {
     if (!finalContours) return
-    downloadBlob(buildDxfFromContours(finalContours), 'keychain-outline.dxf', 'application/dxf')
+    downloadBlob(buildDxfFromContours(finalContours), 'keychain-holder-subject-outline.dxf', 'application/dxf')
   }
 
   function goBack() {
@@ -328,12 +334,18 @@ export function KeychainGenerator() {
         <AssemblyControls
           borderWidthMm={borderWidthMm}
           onBorderWidthChange={setBorderWidthMm}
+          borderHeightMm={borderHeightMm}
+          onBorderHeightChange={setBorderHeightMm}
           lightBoxOn={lightBoxOn}
           onLightBoxChange={setLightBoxOn}
           flatThicknessMm={flatThicknessMm}
           onFlatThicknessChange={setFlatThicknessMm}
-          keyringOn={keyringOn}
-          onKeyringChange={setKeyringOn}
+          barHeightMm={barHeightMm}
+          onBarHeightChange={setBarHeightMm}
+          hookCount={hookCount}
+          onHookCountChange={setHookCount}
+          holeDiameterMm={holeDiameterMm}
+          onHoleDiameterChange={setHoleDiameterMm}
           onConfirm={() => void handleBuildMesh()}
           loading={loading}
           error={error}
@@ -375,5 +387,5 @@ export function KeychainGenerator() {
     rightPane = <MeshPreviewViewer {...props} />
   }
 
-  return <ToolShell title="Keychain Generator" leftPane={leftPane} rightPane={rightPane} />
+  return <ToolShell title="Keychain Holder" leftPane={leftPane} rightPane={rightPane} />
 }

@@ -29,7 +29,7 @@ so they don't get silently reintroduced.
 **2 frontend demos** (both consume all 3 backend services in different
 combinations):
 
-- **Keychain Generator** — photo → outline (Segmentation) + banded relief
+- **Keychain Holder** — photo → outline (Segmentation) + banded relief
   backing (Tonal-Banding) → assembled piece with border/hooks/light-box
   options → 3D preview (Mesh Generator) → export.
 - **Tool Tracer** — photo of tools on paper → outline extraction

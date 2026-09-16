@@ -11,7 +11,7 @@ const KeychainGenerator = lazy(() =>
 
 const TOOLS: { id: string; label: string; icon: LucideIcon; render: () => ReactElement }[] = [
   { id: 'tooltracer', label: 'Tool Tracer', icon: Scan, render: () => <ToolTracer /> },
-  { id: 'keychain', label: 'Keychain Generator', icon: Key, render: () => <KeychainGenerator /> },
+  { id: 'keychain', label: 'Keychain Holder', icon: Key, render: () => <KeychainGenerator /> },
 ]
 
 export function LabsModal() {

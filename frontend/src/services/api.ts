@@ -192,7 +192,7 @@ export const meshFromPockets = (
     max_mesh_dim: maxMeshDim,
   })
 
-// Keychain Generator — grabcut segmentation, tonal banding, and the silhouette mesh, all
+// Keychain Holder — grabcut segmentation, tonal banding, and the assembled-plaque mesh, all
 // proxied through the same Gateway route as Tool Tracer's calls above.
 
 export const segmentPreviewGrabCut = (
@@ -257,17 +257,29 @@ export const meshFromSilhouette = (
   maskB64: string,
   pxPerMm: number,
   maxMeshDim: number,
-  depthMapB64: string | null,
-  depthScale: number | null,
-  flatThicknessMm: number,
+  opts: {
+    depthMapB64: string | null
+    depthScale: number | null
+    flatThicknessMm: number
+    borderWidthMm: number
+    borderHeightMm: number
+    barHeightMm: number
+    hookCount: number
+    holeDiameterMm: number
+  },
 ) =>
   postJson<MeshResponse>('/api/tools/mesh/from_silhouette', {
     mask_png_b64: maskB64,
     px_per_mm: pxPerMm,
     max_mesh_dim: maxMeshDim,
-    depth_map_png_b64: depthMapB64,
-    depth_scale: depthScale,
-    flat_thickness_mm: flatThicknessMm,
+    depth_map_png_b64: opts.depthMapB64,
+    depth_scale: opts.depthScale,
+    flat_thickness_mm: opts.flatThicknessMm,
+    border_width_mm: opts.borderWidthMm,
+    border_height_mm: opts.borderHeightMm,
+    bar_height_mm: opts.barHeightMm,
+    hook_count: opts.hookCount,
+    hole_diameter_mm: opts.holeDiameterMm,
   })
 
 export const submitContactForm = async (payload: {
