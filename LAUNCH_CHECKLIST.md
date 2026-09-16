@@ -9,7 +9,6 @@ Revisit this in full during the "content filling" pass, before going live.
 - [x] `backend/Gateway/appsettings.json` → `Jwt:Key` — set via `JWT_KEY` in the homelab server's `.env` (`~/app/.env` on `portfolio-docker`). `appsettings.json` itself still carries the placeholder text for local dev; set via `dotnet user-secrets` there if needed.
 - [x] `Smtp:User` / `Smtp:AppPassword` — set via a Gmail app password in the server's `.env`. Contact form now sends real email instead of logging to console.
 - [x] `WebPush:VapidPublicKey` / `VapidPrivateKey` — generated and set in the server's `.env`.
-- [ ] `HomeAssistant:BaseUrl` / `LongLivedToken` — empty. The homelab server now exists (`portfolio-docker` VM on Proxmox), so this is no longer blocked on infrastructure — just needs an actual Home Assistant instance set up and a long-lived token issued. Not urgent — site works fine without it, the Home Assistant proxy just 502s until configured.
 
 ## Placeholder links (all currently `href="#"`)
 
@@ -17,7 +16,6 @@ Revisit this in full during the "content filling" pass, before going live.
 - [ ] `ContactSection.tsx` — GitHub, LinkedIn, X, Bluesky, Discord social icons.
 - [ ] `ProjectShowcase.tsx` — repo/demo links for all 3 professional projects.
 - [ ] `MakerProjects.tsx` — repo/demo links for all 3 tinkering projects.
-- [ ] `AdminPortalModal.tsx` (`AdminDashboard`) — "Home Assistant dashboard" link.
 - [x] `Hero.tsx` (`ProfileRing`) — real headshot in at `frontend/public/profile.webp`.
 - [x] `Hero.tsx` — real resume in at `frontend/public/resume.pdf`.
 

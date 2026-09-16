@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { BarChart3, BellRing, Box, ExternalLink, LogOut, X } from 'lucide-react'
+import { BarChart3, BellRing, Box, LogOut, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { generateOtpChallenge, getAnalyticsStats, getContainers, verifyOtpChallenge } from '../../services/api'
 import { registerDevicePush } from '../../services/pushSubscription'
@@ -286,13 +286,7 @@ function AdminDashboard() {
         )}
       </div>
 
-      <div className="mt-6 flex items-center justify-between">
-        <a
-          href="#"
-          className="inline-flex items-center gap-2 text-sm text-white/60 transition-colors hover:text-white"
-        >
-          Home Assistant dashboard <ExternalLink className="h-3.5 w-3.5" />
-        </a>
+      <div className="mt-6 flex items-center justify-end">
         <button
           onClick={logout}
           className="inline-flex items-center gap-2 text-sm text-white/40 transition-colors hover:text-white"

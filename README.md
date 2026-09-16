@@ -45,7 +45,7 @@ docker-compose.prod.yml    production — pulls versioned images from GHCR
 .github/workflows/deploy.yml
 ```
 
-`portfolio-microservices/tools-service/` is the shared backbone for the "Microservice Playground" demos — Keychain Generator and Tool Tracer (Mesh Generator is shared infra, not a demo of its own) — reachable from the Gateway at `/api/tools/**`. See [LAUNCH_CHECKLIST.md](./LAUNCH_CHECKLIST.md) for what's wired vs. still mocked, and `portfolio-microservices/knowledge/` for the full design.
+`portfolio-microservices/tools-service/` is the shared backbone for the "Microservice Playground" demos — Keychain Holder and Tool Tracer (Mesh Generator is shared infra, not a demo of its own) — reachable from the Gateway at `/api/tools/**`. See [LAUNCH_CHECKLIST.md](./LAUNCH_CHECKLIST.md) for what's wired vs. still mocked, and `portfolio-microservices/knowledge/` for the full design.
 
 ## Getting started (local dev)
 
@@ -64,7 +64,7 @@ npm run dev
 
 The dev server binds `0.0.0.0`, so it's reachable from another device on the LAN (useful for testing on a phone) — override the backend target with `BACKEND_URL=http://localhost:5080 npm run dev` if port 5000 is taken.
 
-Copy `.env.example` to `.env` and fill in secrets before running the backend against real integrations (SMTP, Web Push, Home Assistant, Cloudflare Tunnel token). Locally, most of these can be left blank — the app degrades gracefully (contact form logs instead of sends, etc.) rather than crashing.
+Copy `.env.example` to `.env` and fill in secrets before running the backend against real integrations (SMTP, Web Push, Cloudflare Tunnel token). Locally, most of these can be left blank — the app degrades gracefully (contact form logs instead of sends, etc.) rather than crashing.
 
 ## Running with Docker
 
@@ -97,7 +97,6 @@ All routes are under `/api`, prefixed by controller area:
 | `contact` | `POST /api/contact` | Public contact form → SMTP email |
 | `analytics` | `POST /api/analytics/pageview`, `/resume-download`, `/error`, `GET /api/analytics/stats` | Beacon-style write endpoints are public; `stats` (read) requires a JWT. Page views are deduplicated to unique visitors via a client-persisted visitor id. |
 | `admin/challenge` | `POST /generate`, `POST /verify`, `GET /vapid-public-key`, `POST /subscribe` | OTP challenge/response admin login, with optional Web Push approval on a second device |
-| `admin/homeassistant` | `GET /{**path}` | Authenticated reverse proxy to a Home Assistant instance |
 | `tools` | `GET`/`POST /api/tools/{**path}` | Public reverse proxy to the `tools` service (segmentation, tonal-banding, mesh generation) |
 | `system` | `GET /api/system/health`, `GET /api/system/telemetry` | Liveness + basic process metrics |
 

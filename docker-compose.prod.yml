@@ -7,8 +7,6 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       Jwt__Key: ${JWT_KEY:?Set JWT_KEY in .env}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env, e.g. https://anujb.dev}
-      HomeAssistant__BaseUrl: ${HOME_ASSISTANT_BASE_URL:-http://homeassistant.local:8123}
-      HomeAssistant__LongLivedToken: ${HOME_ASSISTANT_TOKEN:-}
       Tools__BaseUrl: ${TOOLS_BASE_URL:-http://tools:8000}
       WebPush__VapidSubject: ${VAPID_SUBJECT:-mailto:bhardwaj.anuj64@gmail.com}
       WebPush__VapidPublicKey: ${VAPID_PUBLIC_KEY:-}

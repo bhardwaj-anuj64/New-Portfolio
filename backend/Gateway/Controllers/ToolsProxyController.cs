@@ -7,8 +7,7 @@ namespace Gateway.Controllers;
 /// <summary>
 /// Forwards requests to the Tools service (segmentation, tonal-banding, mesh generation —
 /// see portfolio-microservices/tools-service), a stateless internal-only container with no
-/// secrets to inject. Public, unlike the Home Assistant proxy, since these are public demo-tool
-/// endpoints (matching JobController).
+/// secrets to inject. Public since these are public demo-tool endpoints.
 /// </summary>
 [ApiController]
 [Route("api/tools")]
