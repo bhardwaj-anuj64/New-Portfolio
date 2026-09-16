@@ -7,7 +7,7 @@ namespace Gateway.Controllers;
 
 [ApiController]
 [Route("api/system")]
-public class SystemController(IDockerService dockerService) : ControllerBase
+public class SystemController(DockerService dockerService) : ControllerBase
 {
     // Baseline sampled at startup so the very first telemetry call already has a real
     // (if short) window instead of measuring against zero.

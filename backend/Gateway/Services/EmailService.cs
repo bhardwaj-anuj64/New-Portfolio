@@ -3,8 +3,10 @@ using System.Net.Mail;
 
 namespace Gateway.Services;
 
-public class EmailService(IConfiguration config, ILogger<EmailService> logger) : IEmailService
+public class EmailService(IConfiguration config, ILogger<EmailService> logger)
 {
+    /// <summary>Delivers a contact form submission — logs it as a fallback when SMTP isn't
+    /// configured, and again if the send itself fails, rather than losing the message.</summary>
     public async Task SendContactMessageAsync(string name, string email, string message, CancellationToken cancellationToken)
     {
         var user = config["Smtp:User"];

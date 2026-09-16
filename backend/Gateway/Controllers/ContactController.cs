@@ -7,7 +7,7 @@ namespace Gateway.Controllers;
 
 [ApiController]
 [Route("api/contact")]
-public class ContactController(IEmailService emailService, ILogger<ContactController> logger) : ControllerBase
+public class ContactController(EmailService emailService, ILogger<ContactController> logger) : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> Submit(ContactRequest request, CancellationToken cancellationToken)

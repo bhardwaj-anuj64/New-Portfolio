@@ -9,7 +9,7 @@ namespace Gateway.Services;
 // ponytail: reads the Docker Engine API directly over its unix socket (native
 // SocketsHttpHandler.ConnectCallback) instead of pulling in Docker.DotNet for the one
 // list-containers call this app needs.
-public class DockerService : IDockerService
+public class DockerService
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
     private readonly HttpClient _http;
@@ -31,6 +31,9 @@ public class DockerService : IDockerService
         _http = new HttpClient(handler) { BaseAddress = new Uri("http://docker"), Timeout = TimeSpan.FromSeconds(3) };
     }
 
+    /// <summary>Lists containers on this host via the Docker Engine API. Returns an empty list
+    /// if the Docker socket isn't reachable (e.g. local dev without it mounted) rather than
+    /// throwing — this backs a status widget, not a critical path.</summary>
     public async Task<IReadOnlyList<ContainerStatus>> GetContainersAsync(CancellationToken cancellationToken)
     {
         try

@@ -12,7 +12,7 @@ namespace Gateway.Controllers;
 [ApiController]
 [Route("api/admin/challenge")]
 [Authorize]
-public class AdminChallengeController(IWebPushService pushService, IConfiguration config) : ControllerBase
+public class AdminChallengeController(WebPushService pushService, IConfiguration config) : ControllerBase
 {
     [HttpPost("generate")]
     [AllowAnonymous]

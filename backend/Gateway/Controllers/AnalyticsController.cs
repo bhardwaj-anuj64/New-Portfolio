@@ -8,7 +8,7 @@ namespace Gateway.Controllers;
 [ApiController]
 [Route("api/analytics")]
 [Authorize]
-public class AnalyticsController(IAnalyticsService analytics) : ControllerBase
+public class AnalyticsController(AnalyticsService analytics) : ControllerBase
 {
     [HttpPost("pageview")]
     [AllowAnonymous]

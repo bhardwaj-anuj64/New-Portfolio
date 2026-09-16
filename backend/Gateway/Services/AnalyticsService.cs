@@ -4,7 +4,7 @@ using Gateway.Models;
 
 namespace Gateway.Services;
 
-public class AnalyticsService : IAnalyticsService
+public class AnalyticsService
 {
     private const int MaxRecentErrors = 50;
     private const int MaxMessageLength = 500;
@@ -46,6 +46,7 @@ public class AnalyticsService : IAnalyticsService
         Persist();
     }
 
+    /// <summary>Message/source are truncated defensively — this endpoint is unauthenticated.</summary>
     public void RecordError(string message, string? source)
     {
         var trimmedMessage = message.Length > MaxMessageLength ? message[..MaxMessageLength] : message;

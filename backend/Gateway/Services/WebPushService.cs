@@ -7,7 +7,7 @@ using WebPush;
 
 namespace Gateway.Services;
 
-public class WebPushService : IWebPushService
+public class WebPushService
 {
     private static readonly TimeSpan OtpLifetime = TimeSpan.FromSeconds(60);
 
@@ -27,6 +27,8 @@ public class WebPushService : IWebPushService
         LoadSubscriptions();
     }
 
+    /// <summary>Generates a 6-digit OTP, stores it with a 60s TTL, and attempts to push it to any
+    /// registered devices — falling back to a console log when none are registered or dispatch fails.</summary>
     public async Task<OtpChallengeResponse> GenerateOtpAsync(CancellationToken cancellationToken)
     {
         EvictExpired();
@@ -47,6 +49,7 @@ public class WebPushService : IWebPushService
         return new OtpChallengeResponse(challengeId, expiresAt, delivered ? "push" : "console");
     }
 
+    /// <summary>Constant-time, single-use verification. Each challengeId can be checked at most once.</summary>
     public bool Verify(string challengeId, string code)
     {
         // Single-use: remove on first check whether or not it succeeds, so a leaked challengeId
@@ -67,6 +70,7 @@ public class WebPushService : IWebPushService
         return CryptographicOperations.FixedTimeEquals(expected, actual);
     }
 
+    /// <summary>The server's public VAPID key, handed to the browser for PushManager.subscribe().</summary>
     public string? GetVapidPublicKey() => _config["WebPush:VapidPublicKey"];
 
     public void Subscribe(PushSubscriptionRequest subscription)

@@ -12,10 +12,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpForwarder();
 
-builder.Services.AddSingleton<IWebPushService, WebPushService>();
-builder.Services.AddSingleton<IEmailService, EmailService>();
-builder.Services.AddSingleton<IAnalyticsService, AnalyticsService>();
-builder.Services.AddSingleton<IDockerService, DockerService>();
+builder.Services.AddSingleton<WebPushService>();
+builder.Services.AddSingleton<EmailService>();
+builder.Services.AddSingleton<AnalyticsService>();
+builder.Services.AddSingleton<DockerService>();
 
 // Docker/production origins arrive as a single comma-separated ALLOWED_ORIGINS env var (arrays
 // don't map cleanly onto env vars); appsettings' Cors:AllowedOrigins is the local-dev fallback.
