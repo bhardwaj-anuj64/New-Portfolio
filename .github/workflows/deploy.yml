@@ -137,6 +137,10 @@ jobs:
   # file itself is NOT hand-maintained on the host — every run checks out the repo fresh and
   # deploys straight from that copy of docker-compose.prod.yml, so a compose change merged to
   # main takes effect on the very next deploy instead of needing a manual scp to the server.
+  # --env-file .env is required because the compose file now lives in the checkout dir, not
+  # /home/deploy/app — Compose resolves .env relative to the compose file's location by
+  # default, not the shell's working directory, so without this flag GHCR_NAMESPACE silently
+  # resolves empty and image refs become ghcr.io//frontend.
   deploy:
     needs: publish
     runs-on: self-hosted
@@ -149,8 +153,8 @@ jobs:
           IMAGE_TAG: ${{ needs.publish.outputs.sha_tag }}
         run: |
           echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker compose -f "$GITHUB_WORKSPACE/docker-compose.prod.yml" pull
-          docker compose -f "$GITHUB_WORKSPACE/docker-compose.prod.yml" up -d --remove-orphans
+          docker compose --env-file .env -f "$GITHUB_WORKSPACE/docker-compose.prod.yml" pull
+          docker compose --env-file .env -f "$GITHUB_WORKSPACE/docker-compose.prod.yml" up -d --remove-orphans
 
       # Containers restarting isn't the same as containers working — confirm both host-mapped
       # ports actually answer before calling the deploy done, so a broken image fails the run
