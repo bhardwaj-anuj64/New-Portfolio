@@ -147,14 +147,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # -p pins the Compose project name. Without it, Compose derives the name from the
+      # compose file's directory — so a future change to where that file is checked out
+      # (like this one) silently renames the project, "up -d" can't recognize the
+      # previous containers as the same app, and the old ones keep squatting the ports
+      # forever instead of being replaced. Never remove this flag.
       - name: Pull and restart via Docker Compose
         working-directory: /home/deploy/app
         env:
           IMAGE_TAG: ${{ needs.publish.outputs.sha_tag }}
         run: |
           echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker compose --env-file .env -f "$GITHUB_WORKSPACE/docker-compose.prod.yml" pull
-          docker compose --env-file .env -f "$GITHUB_WORKSPACE/docker-compose.prod.yml" up -d --remove-orphans
+          docker compose -p new-portfolio --env-file .env -f "$GITHUB_WORKSPACE/docker-compose.prod.yml" pull
+          docker compose -p new-portfolio --env-file .env -f "$GITHUB_WORKSPACE/docker-compose.prod.yml" up -d --remove-orphans
 
       # Containers restarting isn't the same as containers working — confirm both host-mapped
       # ports actually answer before calling the deploy done, so a broken image fails the run
