@@ -63,5 +63,5 @@ Everything below reads as specific, plausible professional content, but it was w
 
 ## Site metadata (missing, not just placeholder)
 
-- [ ] `frontend/index.html` — no `<meta name="description">`, no Open Graph / Twitter Card tags. Link previews (Slack, X, iMessage, etc.) will look bare when this URL gets shared.
-- [ ] No `robots.txt` or `sitemap.xml` in `frontend/public/`.
+- [x] `frontend/index.html` — added `<meta name="description">`, Open Graph, and Twitter Card tags. Reuses the real headshot (`profile.webp`, 971×965) as `og:image`/`twitter:image` rather than commissioning a dedicated 1200×630 social-card image — not the ideal OG aspect ratio, but it's a real photo, not a placeholder; revisit if link previews look cropped oddly in practice.
+- [x] `frontend/public/robots.txt` and `sitemap.xml` added — single-page site, so the sitemap lists just `https://anujb.dev/`.
