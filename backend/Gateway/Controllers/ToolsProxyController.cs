@@ -21,6 +21,23 @@ public class ToolsProxyController : ControllerBase
         UseCookies = false,
     });
 
+    // The frontend's exact set of tools-service calls (see frontend/src/services/api.ts) — kept
+    // narrow rather than forwarding any path, so a route added to the tools-service later (a
+    // debug/introspection endpoint, a framework default like /docs or /openapi.json, anything not
+    // meant to be public) doesn't become internet-reachable through this proxy by accident.
+    private static readonly HashSet<string> AllowedPaths = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "calibrate/rectify",
+        "segment/preview/magicwand",
+        "segment/preview/grabcut",
+        "segment/islands",
+        "segment/finalize",
+        "band/preview",
+        "band/finalize",
+        "mesh/from_pockets",
+        "mesh/from_silhouette",
+    };
+
     private readonly IHttpForwarder _forwarder;
     private readonly string _destinationPrefix;
 
@@ -34,6 +51,11 @@ public class ToolsProxyController : ControllerBase
     [HttpPost("{**path}")]
     public async Task<IActionResult> Forward(string path)
     {
+        if (!AllowedPaths.Contains(path))
+        {
+            return NotFound();
+        }
+
         var error = await _forwarder.SendAsync(
             HttpContext,
             _destinationPrefix,

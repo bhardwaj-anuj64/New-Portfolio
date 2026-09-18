@@ -31,15 +31,21 @@ public class DockerService
         _http = new HttpClient(handler) { BaseAddress = new Uri("http://docker"), Timeout = TimeSpan.FromSeconds(3) };
     }
 
-    /// <summary>Lists containers on this host via the Docker Engine API. Returns an empty list
-    /// if the Docker socket isn't reachable (e.g. local dev without it mounted) rather than
-    /// throwing — this backs a status widget, not a critical path.</summary>
+    // Scopes the Docker API's own "label" filter to this compose project (see the `-p
+    // new-portfolio` flag in deploy.yml) — without it, this endpoint returns every container on
+    // the host, including unrelated homelab services (Pi-hole, Home Assistant, etc.) that have
+    // nothing to do with proving the portfolio's own telemetry is real.
+    private const string ContainersFilter = """{"label":["com.docker.compose.project=new-portfolio"]}""";
+
+    /// <summary>Lists this compose project's containers via the Docker Engine API. Returns an
+    /// empty list if the Docker socket isn't reachable (e.g. local dev without it mounted) rather
+    /// than throwing — this backs a status widget, not a critical path.</summary>
     public async Task<IReadOnlyList<ContainerStatus>> GetContainersAsync(CancellationToken cancellationToken)
     {
         try
         {
-            var raw = await _http.GetFromJsonAsync<List<RawContainer>>(
-                "/containers/json?all=true", JsonOptions, cancellationToken);
+            var url = $"/containers/json?all=true&filters={Uri.EscapeDataString(ContainersFilter)}";
+            var raw = await _http.GetFromJsonAsync<List<RawContainer>>(url, JsonOptions, cancellationToken);
             return raw?.Select(c => new ContainerStatus(
                 (c.Names?.FirstOrDefault() ?? "unknown").TrimStart('/'),
                 c.State ?? "unknown",
