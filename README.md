@@ -35,7 +35,7 @@ frontend/
     hooks/             small reusable hooks (canvas render loop, intersection, page visibility)
 backend/Gateway/
   Controllers/        one controller per feature area (see API overview below)
-  Services/           business logic behind each controller (analytics, email, push)
+  Services/           business logic behind each controller (analytics, email, ntfy, docker telemetry)
   Models/              request/response DTOs
 docker-compose.yml         local dev / builds gateway+frontend from source, pulls the tools image
 docker-compose.prod.yml    production — pulls versioned images from GHCR
@@ -61,7 +61,7 @@ npm run dev
 
 The dev server binds `0.0.0.0`, so it's reachable from another device on the LAN (useful for testing on a phone) — override the backend target with `BACKEND_URL=http://localhost:5080 npm run dev` if port 5000 is taken.
 
-Copy `.env.example` to `.env` and fill in secrets before running the backend against real integrations (SMTP, Web Push, Cloudflare Tunnel token). Locally, most of these can be left blank — the app degrades gracefully (contact form logs instead of sends, etc.) rather than crashing.
+Copy `.env.example` to `.env` and fill in secrets before running the backend against real integrations (SMTP, ntfy.sh, Cloudflare Tunnel token). Locally, most of these can be left blank — the app degrades gracefully (contact form logs instead of sends, etc.) rather than crashing.
 
 ## Running with Docker
 

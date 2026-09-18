@@ -2,7 +2,11 @@ services:
   gateway:
     image: ghcr.io/${GHCR_NAMESPACE}/gateway:${IMAGE_TAG:-latest}
     ports:
-      - "5000:5000"
+      # Loopback-only: cloudflared reaches this over the Docker network (portfolio-network) by
+      # service name regardless of this binding — this only controls host-level reachability.
+      # Publishing to 0.0.0.0 (the old default) exposed the Gateway to the whole home LAN, not
+      # just sibling containers, contradicting Program.cs's stated trust boundary.
+      - "127.0.0.1:5000:5000"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       Jwt__Key: ${JWT_KEY:?Set JWT_KEY in .env}

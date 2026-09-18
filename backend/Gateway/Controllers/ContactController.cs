@@ -32,5 +32,9 @@ public class ContactController(EmailService emailService, ILogger<ContactControl
         return Ok(new ContactResponse(true, "Message received."));
     }
 
-    private static string Sanitize(string input) => Regex.Replace(input.Trim(), "<[^>]*>", string.Empty);
+    // Strips CR/LF too, not just tags — Name flows into the email Subject header, and while
+    // System.Net.Mail encodes headers rather than raw-concatenating them, stripping control
+    // characters here removes any doubt regardless of mail-library behavior.
+    private static string Sanitize(string input) =>
+        Regex.Replace(input.Trim(), "<[^>]*>", string.Empty).Replace("\r", "").Replace("\n", "");
 }

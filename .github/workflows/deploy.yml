@@ -157,6 +157,7 @@ jobs:
       - name: Health check
         working-directory: /home/deploy/app
         run: |
+          set -e
           check() {
             for i in $(seq 1 15); do
               if curl -sf "$1" > /dev/null; then
@@ -180,6 +181,7 @@ jobs:
       # working tag so the site self-heals instead of staying on a broken version until someone
       # notices. No-op (skipped) if there's no prior good tag to roll back to.
       - name: Roll back to last-known-good tag
+        id: rollback
         if: failure() && steps.prev.outputs.tag != ''
         working-directory: /home/deploy/app
         env:
@@ -189,19 +191,23 @@ jobs:
           docker compose -p new-portfolio --env-file .env -f "$GITHUB_WORKSPACE/docker-compose.prod.yml" pull
           docker compose -p new-portfolio --env-file .env -f "$GITHUB_WORKSPACE/docker-compose.prod.yml" up -d --remove-orphans
 
-      # Runs after the rollback attempt above (if any), so the gateway is back on a known-working
-      # version by the time this fires — the notify call itself depends on the gateway being up.
-      # Pushes through the same admin-OTP push channel rather than a third-party service; silently
-      # does nothing if no admin device is subscribed or the secret isn't set on the server yet.
+      # Runs after the rollback attempt above (if any), so the gateway is (hopefully) back on a
+      # known-working version by the time this fires — the notify call itself depends on the
+      # gateway being up. Pushes through the same admin-OTP ntfy channel rather than a third-party
+      # service; silently does nothing if no device is subscribed or the secret isn't set yet.
+      # Message branches on steps.rollback.outcome, not just whether a previous tag existed —
+      # otherwise a rollback that itself failed (e.g. GHCR evicted the old tag) would still claim
+      # "Rolled back to X" even though the site may still be down.
       - name: Notify on deploy failure
         if: failure()
         working-directory: /home/deploy/app
         run: |
-          rolled_back="${{ steps.prev.outputs.tag != '' }}"
-          if [ "$rolled_back" = "true" ]; then
+          if [ -z "${{ steps.prev.outputs.tag }}" ]; then
+            msg="Deploy of ${{ needs.publish.outputs.sha_tag }} failed health check. No previous tag to roll back to — site may be down."
+          elif [ "${{ steps.rollback.outcome }}" = "success" ]; then
             msg="Deploy of ${{ needs.publish.outputs.sha_tag }} failed health check. Rolled back to ${{ steps.prev.outputs.tag }}."
           else
-            msg="Deploy of ${{ needs.publish.outputs.sha_tag }} failed health check. No previous tag to roll back to — site may be down."
+            msg="Deploy of ${{ needs.publish.outputs.sha_tag }} failed health check. Rollback to ${{ steps.prev.outputs.tag }} also failed — site may still be down."
           fi
           curl -sf -X POST http://localhost:5000/api/notify/deploy-failure \
             -H "Content-Type: application/json" \
