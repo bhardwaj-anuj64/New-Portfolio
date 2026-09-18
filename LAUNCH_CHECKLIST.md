@@ -65,3 +65,5 @@ Everything below reads as specific, plausible professional content, but it was w
 
 - [x] `frontend/index.html` — added `<meta name="description">`, Open Graph, and Twitter Card tags. Reuses the real headshot (`profile.webp`, 971×965) as `og:image`/`twitter:image` rather than commissioning a dedicated 1200×630 social-card image — not the ideal OG aspect ratio, but it's a real photo, not a placeholder; revisit if link previews look cropped oddly in practice.
 - [x] `frontend/public/robots.txt` and `sitemap.xml` added — single-page site, so the sitemap lists just `https://anujb.dev/`.
+- [x] `frontend/index.html` — added a canonical tag (`https://anujb.dev/`), an `apple-touch-icon.png` (180×180, cropped from `profile.webp` since no dedicated icon asset exists), and a `Person` JSON-LD block (name, jobTitle, headshot, `sameAs` → GitHub/LinkedIn/Instagram) for richer search results.
+- [ ] Submit `sitemap.xml` to Google Search Console and Bing Webmaster Tools — can't be done from the codebase, needs manual verification with your Google/Microsoft account. See chat for steps.
