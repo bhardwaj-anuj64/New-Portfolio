@@ -2,7 +2,7 @@
 
 A bespoke full-stack portfolio site for Anuj Bhardwaj. Not a template: a React + Three.js frontend backed by a real ASP.NET Core API, deployed to a self-hosted homelab server behind a Cloudflare Tunnel.
 
-**Status: work in progress.** The site is live at [anujb.dev](https://anujb.dev), but a chunk of content and a few backend integrations are still placeholders — see [LAUNCH_CHECKLIST.md](./LAUNCH_CHECKLIST.md) for the exact list of what's real vs. mocked.
+**Status: live.** The site is up at [anujb.dev](https://anujb.dev) with real content throughout. A couple of known, non-blocking follow-ups remain — see [LAUNCH_CHECKLIST.md](./LAUNCH_CHECKLIST.md) for specifics.
 
 ## Stack
 
