@@ -8,8 +8,8 @@ Revisit this in full during the "content filling" pass, before going live.
 
 - [x] `backend/Gateway/appsettings.json` → `Jwt:Key` — set via `JWT_KEY` in the homelab server's `.env` (`~/app/.env` on `portfolio-docker`). `appsettings.json` itself still carries the placeholder text for local dev; set via `dotnet user-secrets` there if needed.
 - [x] `Smtp:User` / `Smtp:AppPassword` — set via a Gmail app password in the server's `.env`. Contact form now sends real email instead of logging to console.
-- [ ] `Ntfy:Topic` — replaces the old VAPID/Web Push subscription system entirely (admin OTP delivery and deploy-failure alerts both now post to this ntfy.sh topic instead of a browser push subscription). `NTFY_TOPIC` needs generating and adding to the server's `.env`; until then both OTP delivery and deploy notifications fall back to their console-log/no-op paths.
-- [ ] `Deploy:NotifySecret` — `DEPLOY_NOTIFY_SECRET` repo secret is set on GitHub Actions (New-Portfolio), but the matching value still needs adding to the server's `.env` by hand (same pattern as the other secrets above) before deploy-failure push notifications (`NotifyController` → `POST /api/notify/deploy-failure`) will actually authenticate.
+- [x] `Ntfy:Topic` — replaces the old VAPID/Web Push subscription system entirely (admin OTP delivery and deploy-failure alerts both post to a private ntfy.sh topic instead of a browser push subscription). Set in the server's `.env`; verified live end-to-end 2026-09-18 (generated a real OTP challenge, retrieved the code from ntfy, completed login with it).
+- [x] `Deploy:NotifySecret` — `DEPLOY_NOTIFY_SECRET` set both as a GitHub Actions repo secret (New-Portfolio) and in the server's `.env`. Verified live: `POST /api/notify/deploy-failure` returns 204 with the correct secret, 400 on a missing/empty one.
 
 ## Placeholder links (all currently `href="#"`)
 
@@ -53,7 +53,7 @@ Everything below reads as specific, plausible professional content, but it was w
 
 ## Site analytics
 
-- [x] `AnalyticsController.cs` / `AnalyticsService.cs` — real page-view counter, resume-download counter, and a capped (50-entry) client-error log, persisted to `data/site-stats.json` in the same volume as push subscriptions. Wired into the admin dashboard (`AdminPortalModal.tsx` → `SiteAnalytics`). No third-party analytics service used — in line with the homelab/self-hosted approach.
+- [x] `AnalyticsController.cs` / `AnalyticsService.cs` — real page-view counter, resume-download counter, and a capped (50-entry) client-error log, persisted to `data/site-stats.json` in the `gateway-data` volume. Wired into the admin dashboard (`AdminPortalModal.tsx` → `SiteAnalytics`). No third-party analytics service used — in line with the homelab/self-hosted approach.
 
 ## Deploy pipeline
 
