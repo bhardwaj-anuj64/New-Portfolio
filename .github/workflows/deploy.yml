@@ -128,6 +128,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Read before this run touches anything, so it still reflects the tag that was actually
+      # healthy last time — not this run's (possibly broken) tag. Lives outside the checkout dir
+      # (which is replaced every run) so it survives between deploys. Absent on the very first
+      # run after this step was added, or the very first deploy ever — rollback is a no-op then.
+      - name: Read last-known-good image tag
+        id: prev
+        working-directory: /home/deploy/app
+        run: echo "tag=$(cat .last-good-tag 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
+
       # -p pins the Compose project name. Without it, Compose derives the name from the
       # compose file's directory — so a future change to where that file is checked out
       # (like this one) silently renames the project, "up -d" can't recognize the
@@ -161,3 +170,40 @@ jobs:
           }
           check http://localhost:5000/api/system/health
           check http://localhost:8080/
+
+      - name: Record this tag as last-known-good
+        if: success()
+        working-directory: /home/deploy/app
+        run: echo "${{ needs.publish.outputs.sha_tag }}" > .last-good-tag
+
+      # Only reachable if the health check (or an earlier step) failed. Re-deploys the previous
+      # working tag so the site self-heals instead of staying on a broken version until someone
+      # notices. No-op (skipped) if there's no prior good tag to roll back to.
+      - name: Roll back to last-known-good tag
+        if: failure() && steps.prev.outputs.tag != ''
+        working-directory: /home/deploy/app
+        env:
+          IMAGE_TAG: ${{ steps.prev.outputs.tag }}
+        run: |
+          echo "Deploy of ${{ needs.publish.outputs.sha_tag }} failed health check — rolling back to ${{ steps.prev.outputs.tag }}"
+          docker compose -p new-portfolio --env-file .env -f "$GITHUB_WORKSPACE/docker-compose.prod.yml" pull
+          docker compose -p new-portfolio --env-file .env -f "$GITHUB_WORKSPACE/docker-compose.prod.yml" up -d --remove-orphans
+
+      # Runs after the rollback attempt above (if any), so the gateway is back on a known-working
+      # version by the time this fires — the notify call itself depends on the gateway being up.
+      # Pushes through the same admin-OTP push channel rather than a third-party service; silently
+      # does nothing if no admin device is subscribed or the secret isn't set on the server yet.
+      - name: Notify on deploy failure
+        if: failure()
+        working-directory: /home/deploy/app
+        run: |
+          rolled_back="${{ steps.prev.outputs.tag != '' }}"
+          if [ "$rolled_back" = "true" ]; then
+            msg="Deploy of ${{ needs.publish.outputs.sha_tag }} failed health check. Rolled back to ${{ steps.prev.outputs.tag }}."
+          else
+            msg="Deploy of ${{ needs.publish.outputs.sha_tag }} failed health check. No previous tag to roll back to — site may be down."
+          fi
+          curl -sf -X POST http://localhost:5000/api/notify/deploy-failure \
+            -H "Content-Type: application/json" \
+            -d "$(printf '{"secret":"%s","message":"%s"}' "${{ secrets.DEPLOY_NOTIFY_SECRET }}" "$msg")" \
+            || echo "::warning::Deploy-failure push notification could not be delivered"

@@ -9,6 +9,7 @@ Revisit this in full during the "content filling" pass, before going live.
 - [x] `backend/Gateway/appsettings.json` → `Jwt:Key` — set via `JWT_KEY` in the homelab server's `.env` (`~/app/.env` on `portfolio-docker`). `appsettings.json` itself still carries the placeholder text for local dev; set via `dotnet user-secrets` there if needed.
 - [x] `Smtp:User` / `Smtp:AppPassword` — set via a Gmail app password in the server's `.env`. Contact form now sends real email instead of logging to console.
 - [x] `WebPush:VapidPublicKey` / `VapidPrivateKey` — generated and set in the server's `.env`.
+- [ ] `Deploy:NotifySecret` — `DEPLOY_NOTIFY_SECRET` repo secret is set on GitHub Actions (New-Portfolio), but the matching value still needs adding to the server's `.env` by hand (same pattern as the other secrets above) before deploy-failure push notifications (`NotifyController` → `POST /api/notify/deploy-failure`) will actually authenticate. Until then the deploy workflow's notify step just logs a workflow warning and does nothing.
 
 ## Placeholder links (all currently `href="#"`)
 

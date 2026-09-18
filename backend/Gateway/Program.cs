@@ -79,6 +79,17 @@ if (app.Environment.IsDevelopment())
 app.UseForwardedHeaders();
 app.UseCookiePolicy();
 app.UseCors("Frontend");
+
+// Without this, an unhandled exception anywhere returns a bare empty 500 instead of the
+// {success:false} JSON shape every controller normally returns — breaks res.json() on the
+// frontend instead of surfacing a clean error.
+app.UseExceptionHandler(handler => handler.Run(async context =>
+{
+    context.Response.ContentType = "application/json";
+    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+    await context.Response.WriteAsJsonAsync(new { success = false, error = "Internal server error." });
+}));
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

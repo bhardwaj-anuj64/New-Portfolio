@@ -38,7 +38,8 @@ public class WebPushService
         var expiresAt = DateTimeOffset.UtcNow.Add(OtpLifetime);
         _challenges[challengeId] = (code, expiresAt);
 
-        var delivered = await TryDispatchAsync(code, cancellationToken);
+        var payload = $"Level 5 access code for ANUJ-GATEWAY-01: {code} (expires in 60s)";
+        var delivered = await DispatchAsync(payload, cancellationToken);
         if (!delivered)
         {
             // ponytail: console-only fallback — this is the path that actually runs until a real
@@ -48,6 +49,11 @@ public class WebPushService
 
         return new OtpChallengeResponse(challengeId, expiresAt, delivered ? "push" : "console");
     }
+
+    /// <summary>Sends an arbitrary message to every subscribed device — used by the deploy
+    /// pipeline's failure notification, reusing the same push channel as the OTP flow instead of
+    /// a third-party notification service.</summary>
+    public Task<bool> SendAsync(string message, CancellationToken cancellationToken) => DispatchAsync(message, cancellationToken);
 
     /// <summary>Constant-time, single-use verification. Each challengeId can be checked at most once.</summary>
     public bool Verify(string challengeId, string code)
@@ -79,7 +85,7 @@ public class WebPushService
         PersistSubscriptions();
     }
 
-    private async Task<bool> TryDispatchAsync(string code, CancellationToken cancellationToken)
+    private async Task<bool> DispatchAsync(string payload, CancellationToken cancellationToken)
     {
         var publicKey = _config["WebPush:VapidPublicKey"];
         var privateKey = _config["WebPush:VapidPrivateKey"];
@@ -91,7 +97,6 @@ public class WebPushService
         }
 
         var vapidDetails = new VapidDetails(subject, publicKey, privateKey);
-        var payload = $"Level 5 access code for ANUJ-GATEWAY-01: {code} (expires in 60s)";
 
         var delivered = false;
         foreach (var subscription in _subscriptions.Values)

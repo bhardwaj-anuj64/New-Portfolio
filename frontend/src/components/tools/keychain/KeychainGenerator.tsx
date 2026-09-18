@@ -137,15 +137,19 @@ export function KeychainGenerator() {
 
   async function loadFile(file: File) {
     setError(null)
-    const img = await fileToImage(file)
-    const { base64, width, height } = downscaleToBase64(img, UPLOAD_MAX_DIMENSION)
-    setImageB64(base64)
-    setImageDims({ width, height })
-    setPxPerMm(Math.max(width, height) / TARGET_SIZE_MM)
-    setBbox(null)
-    setFgHints([])
-    setBgHints([])
-    setStep('segment')
+    try {
+      const img = await fileToImage(file)
+      const { base64, width, height } = downscaleToBase64(img, UPLOAD_MAX_DIMENSION)
+      setImageB64(base64)
+      setImageDims({ width, height })
+      setPxPerMm(Math.max(width, height) / TARGET_SIZE_MM)
+      setBbox(null)
+      setFgHints([])
+      setBgHints([])
+      setStep('segment')
+    } catch {
+      setError('Could not read that image — try a different file.')
+    }
   }
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {

@@ -13,6 +13,7 @@ services:
       WebPush__VapidPrivateKey: ${VAPID_PRIVATE_KEY:-}
       Smtp__User: ${SMTP_USER:-}
       Smtp__AppPassword: ${SMTP_APP_PASSWORD:-}
+      Deploy__NotifySecret: ${DEPLOY_NOTIFY_SECRET:-}
     volumes:
       # Persists push subscriptions across redeploys — everything else in the gateway is
       # deliberately in-memory (OTP challenges are 60s-lived, job results are transient).

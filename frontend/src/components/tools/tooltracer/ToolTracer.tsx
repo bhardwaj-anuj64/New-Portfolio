@@ -118,12 +118,16 @@ export function ToolTracer() {
 
   async function loadFile(file: File) {
     setError(null)
-    const img = await fileToImage(file)
-    const { base64, width, height } = downscaleToBase64(img, UPLOAD_MAX_DIMENSION)
-    setImageB64(base64)
-    setImageDims({ width, height })
-    setCorners([])
-    setStep('calibrate')
+    try {
+      const img = await fileToImage(file)
+      const { base64, width, height } = downscaleToBase64(img, UPLOAD_MAX_DIMENSION)
+      setImageB64(base64)
+      setImageDims({ width, height })
+      setCorners([])
+      setStep('calibrate')
+    } catch {
+      setError('Could not read that image — try a different file.')
+    }
   }
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {

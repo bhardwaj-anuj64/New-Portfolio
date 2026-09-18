@@ -5,6 +5,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Gateway.Controllers;
 
+// Deliberately public, unauthenticated: the "Systems Lab" section on the public site
+// (frontend/src/components/tinkering/SystemsLab.tsx) polls these endpoints with no auth token to
+// show live container/telemetry data as proof the homelab stats are real, not mocked. The admin
+// dashboard also reads GetContainers, but that's incidental reuse, not the reason this is public.
 [ApiController]
 [Route("api/system")]
 public class SystemController(DockerService dockerService) : ControllerBase

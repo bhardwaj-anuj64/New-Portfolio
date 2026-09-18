@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { AdminPortalModal } from './components/admin/AdminPortalModal'
 import { ContactSection } from './components/contact/ContactSection'
+import { ErrorBoundary } from './components/common/ErrorBoundary'
 import { Footer } from './components/footer/Footer'
 import { Hero } from './components/hero/Hero'
 import { Navbar } from './components/nav/Navbar'
@@ -36,16 +37,20 @@ function App() {
         🚧 Work in Progress — you may encounter incomplete features or rough edges.
       </div>
       <Navbar />
-      <Hero />
-      <WelcomeSection />
-      <PerspectiveSection />
-      <TinkeringSection />
-      <QualificationsSection />
-      <ContactSection />
+      <ErrorBoundary>
+        <Hero />
+        <WelcomeSection />
+        <PerspectiveSection />
+        <TinkeringSection />
+        <QualificationsSection />
+        <ContactSection />
+      </ErrorBoundary>
       <Footer />
 
       <AdminPortalModal />
-      <LabsModal />
+      <ErrorBoundary>
+        <LabsModal />
+      </ErrorBoundary>
     </div>
   )
 }
