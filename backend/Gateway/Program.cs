@@ -12,7 +12,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpForwarder();
 
-builder.Services.AddSingleton<WebPushService>();
+builder.Services.AddSingleton<NtfyService>();
 builder.Services.AddSingleton<EmailService>();
 builder.Services.AddSingleton<AnalyticsService>();
 builder.Services.AddSingleton<DockerService>();

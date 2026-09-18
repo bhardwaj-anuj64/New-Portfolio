@@ -11,7 +11,7 @@ namespace Gateway.Controllers;
 // channel as admin OTP delivery rather than adding a third-party notification service.
 [ApiController]
 [Route("api/notify")]
-public class NotifyController(WebPushService pushService, IConfiguration config) : ControllerBase
+public class NotifyController(NtfyService ntfyService, IConfiguration config) : ControllerBase
 {
     [HttpPost("deploy-failure")]
     public async Task<IActionResult> DeployFailure([FromBody] DeployNotifyRequest request, CancellationToken cancellationToken)
@@ -22,7 +22,7 @@ public class NotifyController(WebPushService pushService, IConfiguration config)
             return Unauthorized();
         }
 
-        await pushService.SendAsync(request.Message, cancellationToken);
+        await ntfyService.SendAsync(request.Message, cancellationToken);
         return NoContent();
     }
 

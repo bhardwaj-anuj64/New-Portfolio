@@ -15,7 +15,7 @@ public class EmailService(IConfiguration config, ILogger<EmailService> logger)
 
         if (string.IsNullOrWhiteSpace(user) || string.IsNullOrWhiteSpace(appPassword) || string.IsNullOrWhiteSpace(to))
         {
-            // ponytail: console-only fallback — same shape as WebPushService's OTP fallback.
+            // ponytail: console-only fallback — same shape as NtfyService's OTP fallback.
             // This is the path that actually runs until real SMTP credentials are configured.
             logger.LogWarning("[CONTACT — DEV FALLBACK] From {Name} <{Email}>: {Message}", name, email, message);
             return;

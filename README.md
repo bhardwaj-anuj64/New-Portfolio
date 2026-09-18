@@ -15,7 +15,7 @@ A bespoke full-stack portfolio site for Anuj Bhardwaj. Not a template: a React +
 **Backend** (`backend/Gateway/`)
 - ASP.NET Core 8 Web API — a single "Gateway" service, not a microservice mesh
 - JWT bearer auth for admin-only endpoints
-- SMTP (Gmail) for the contact form, Web Push (VAPID) for admin OTP approval
+- SMTP (Gmail) for the contact form, ntfy.sh for admin OTP delivery and deploy-failure alerts
 
 **Infra**
 - Docker Compose (local build vs. prebuilt GHCR images for prod)
@@ -30,7 +30,7 @@ frontend/
   src/
     components/      one folder per page section (hero, nav, contact, tinkering, ...)
                       + admin/ (OTP-gated dashboard) and tools/ (microservice playground)
-    services/         api.ts (REST calls), pushSubscription.ts
+    services/         api.ts (REST calls)
     store/             zustand stores (admin auth, labs modal)
     hooks/             small reusable hooks (canvas render loop, intersection, page visibility)
 backend/Gateway/
@@ -93,9 +93,10 @@ All routes are under `/api`, prefixed by controller area:
 |---|---|---|
 | `contact` | `POST /api/contact` | Public contact form → SMTP email |
 | `analytics` | `POST /api/analytics/pageview`, `/resume-download`, `/error`, `GET /api/analytics/stats` | Beacon-style write endpoints are public; `stats` (read) requires a JWT. Page views are deduplicated to unique visitors via a client-persisted visitor id. |
-| `admin/challenge` | `POST /generate`, `POST /verify`, `GET /vapid-public-key`, `POST /subscribe` | OTP challenge/response admin login, with optional Web Push approval on a second device |
+| `admin/challenge` | `POST /generate`, `POST /verify` | OTP challenge/response admin login; the code is delivered via ntfy.sh (falls back to a server console log if unconfigured) |
+| `notify` | `POST /deploy-failure` | Shared-secret-gated; pushes a deploy-failure alert via the same ntfy.sh topic as OTP delivery |
 | `tools` | `GET`/`POST /api/tools/{**path}` | Public reverse proxy to the `tools` service (segmentation, tonal-banding, mesh generation) |
-| `system` | `GET /api/system/health`, `GET /api/system/telemetry` | Liveness + basic process metrics |
+| `system` | `GET /api/system/health`, `GET /api/system/telemetry`, `GET /api/system/containers` | Liveness + basic process/container metrics — deliberately public, backs the "Systems Lab" homepage feature |
 
 ## Known gaps
 

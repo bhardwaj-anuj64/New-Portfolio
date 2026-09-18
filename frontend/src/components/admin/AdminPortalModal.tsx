@@ -1,8 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { BarChart3, BellRing, Box, LogOut, X } from 'lucide-react'
+import { BarChart3, Box, LogOut, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { generateOtpChallenge, getAnalyticsStats, getContainers, verifyOtpChallenge } from '../../services/api'
-import { registerDevicePush } from '../../services/pushSubscription'
 import { useAdminStore } from '../../store/useAdminStore'
 import type { AnalyticsStatsResponse, ContainerStatus, OtpChallengeResponse } from '../../types'
 import { AdminMatrixCanvas } from './AdminMatrixCanvas'
@@ -134,7 +133,7 @@ function OtpGate() {
       {dispatch !== 'idle' && (
         <div className="rounded-lg border border-white/10 bg-black/50 p-3 font-mono text-xs text-white/70">
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            &gt; REQUESTING VAPID DISPATCH...
+            &gt; REQUESTING NTFY DISPATCH...
           </motion.p>
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>
             &gt; VERIFYING CHALLENGE TOKEN...
@@ -216,9 +215,6 @@ function SiteAnalytics() {
 
 function AdminDashboard() {
   const logout = useAdminStore((s) => s.logout)
-  const token = useAdminStore((s) => s.token)
-  const [registering, setRegistering] = useState(false)
-  const [pushStatus, setPushStatus] = useState<{ ok: boolean; message: string } | null>(null)
   const [containers, setContainers] = useState<ContainerStatus[] | null>(null)
 
   useEffect(() => {
@@ -226,19 +222,6 @@ function AdminDashboard() {
       .then(setContainers)
       .catch(() => setContainers([]))
   }, [])
-
-  async function handleRegisterPush() {
-    if (!token) return
-    setRegistering(true)
-    setPushStatus(null)
-    try {
-      setPushStatus(await registerDevicePush(token))
-    } catch (err) {
-      setPushStatus({ ok: false, message: err instanceof Error ? err.message : 'Registration failed.' })
-    } finally {
-      setRegistering(false)
-    }
-  }
 
   return (
     <>
@@ -265,24 +248,6 @@ function AdminDashboard() {
               </span>
             </div>
           ))
-        )}
-      </div>
-
-      <div className="mt-6 flex flex-col gap-2 rounded-lg border border-white/10 bg-white/5 p-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-white/50">
-            <BellRing className="h-3.5 w-3.5" /> Push OTP Delivery
-          </span>
-          <button
-            onClick={handleRegisterPush}
-            disabled={registering}
-            className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white transition-colors hover:bg-white/10 disabled:opacity-50"
-          >
-            {registering ? 'Registering…' : 'Enable on this device'}
-          </button>
-        </div>
-        {pushStatus && (
-          <p className={`text-xs ${pushStatus.ok ? 'text-emerald-300' : 'text-red-400'}`}>{pushStatus.message}</p>
         )}
       </div>
 

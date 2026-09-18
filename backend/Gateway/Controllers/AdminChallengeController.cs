@@ -12,20 +12,20 @@ namespace Gateway.Controllers;
 [ApiController]
 [Route("api/admin/challenge")]
 [Authorize]
-public class AdminChallengeController(WebPushService pushService, IConfiguration config) : ControllerBase
+public class AdminChallengeController(NtfyService ntfyService, IConfiguration config) : ControllerBase
 {
     [HttpPost("generate")]
     [AllowAnonymous]
     public async Task<ActionResult<OtpChallengeResponse>> Generate(CancellationToken cancellationToken)
     {
-        return Ok(await pushService.GenerateOtpAsync(cancellationToken));
+        return Ok(await ntfyService.GenerateOtpAsync(cancellationToken));
     }
 
     [HttpPost("verify")]
     [AllowAnonymous]
     public ActionResult<VerifyResponse> Verify(OtpVerifyRequest request)
     {
-        if (!pushService.Verify(request.ChallengeId, request.Code))
+        if (!ntfyService.Verify(request.ChallengeId, request.Code))
         {
             return Unauthorized(new VerifyResponse(false, null, null));
         }
@@ -35,24 +35,6 @@ public class AdminChallengeController(WebPushService pushService, IConfiguration
         var token = IssueAdminToken(expiresAt);
 
         return Ok(new VerifyResponse(true, token, expiresAt));
-    }
-
-    // Public: the VAPID public key is, by design, safe to hand to any browser that asks.
-    [HttpGet("vapid-public-key")]
-    [AllowAnonymous]
-    public ActionResult<object> GetVapidPublicKey()
-    {
-        var key = pushService.GetVapidPublicKey();
-        return string.IsNullOrWhiteSpace(key) ? NotFound() : Ok(new { publicKey = key });
-    }
-
-    // Deliberately NOT [AllowAnonymous]: only an already-authenticated admin session may enroll a
-    // device for future push OTPs, so knowing the #admin URL alone can't hijack future logins.
-    [HttpPost("subscribe")]
-    public IActionResult Subscribe(PushSubscriptionRequest request)
-    {
-        pushService.Subscribe(request);
-        return Ok();
     }
 
     private string IssueAdminToken(DateTimeOffset expiresAt)

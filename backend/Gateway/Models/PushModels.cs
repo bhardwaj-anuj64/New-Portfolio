@@ -6,6 +6,4 @@ public record OtpChallengeResponse(string ChallengeId, DateTimeOffset ExpiresAt,
 
 public record OtpVerifyRequest([Required] string ChallengeId, [Required] string Code);
 
-public record PushSubscriptionRequest(string Endpoint, string P256dh, string Auth);
-
 public record DeployNotifyRequest([Required] string Secret, [Required] string Message);

@@ -66,25 +66,6 @@ export const verifyOtpChallenge = async (challengeId: string, code: string): Pro
   return res.json() as Promise<VerifyResponse>
 }
 
-export const getVapidPublicKey = async (): Promise<string | null> => {
-  const res = await fetch(`${API_BASE_URL}/api/admin/challenge/vapid-public-key`)
-  if (!res.ok) return null
-  const { publicKey } = (await res.json()) as { publicKey: string }
-  return publicKey
-}
-
-export const subscribeDevicePush = async (
-  token: string,
-  subscription: { endpoint: string; p256dh: string; auth: string },
-): Promise<boolean> => {
-  const res = await fetch(`${API_BASE_URL}/api/admin/challenge/subscribe`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify(subscription),
-  })
-  return res.ok
-}
-
 // Fire-and-forget: analytics must never break the page it's measuring.
 function beacon(path: string, body?: unknown): void {
   void fetch(`${API_BASE_URL}${path}`, {

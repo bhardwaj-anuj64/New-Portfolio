@@ -8,15 +8,13 @@ services:
       Jwt__Key: ${JWT_KEY:?Set JWT_KEY in .env}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env, e.g. https://anujb.dev}
       Tools__BaseUrl: ${TOOLS_BASE_URL:-http://tools:8000}
-      WebPush__VapidSubject: ${VAPID_SUBJECT:-mailto:bhardwaj.anuj64@gmail.com}
-      WebPush__VapidPublicKey: ${VAPID_PUBLIC_KEY:-}
-      WebPush__VapidPrivateKey: ${VAPID_PRIVATE_KEY:-}
+      Ntfy__Topic: ${NTFY_TOPIC:-}
       Smtp__User: ${SMTP_USER:-}
       Smtp__AppPassword: ${SMTP_APP_PASSWORD:-}
       Deploy__NotifySecret: ${DEPLOY_NOTIFY_SECRET:-}
     volumes:
-      # Persists push subscriptions across redeploys — everything else in the gateway is
-      # deliberately in-memory (OTP challenges are 60s-lived, job results are transient).
+      # Persists site analytics (site-stats.json) across redeploys — everything else in the
+      # gateway is deliberately in-memory (OTP challenges are 60s-lived, job results are transient).
       - gateway-data:/app/data
       # Read-only: lets the Gateway list sibling containers (Systems Lab / admin dashboard
       # telemetry) via the Docker Engine API without giving it control over the daemon.
