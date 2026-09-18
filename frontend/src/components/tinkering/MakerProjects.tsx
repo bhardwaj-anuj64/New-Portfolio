@@ -3,28 +3,24 @@ import type { ShowcaseProject } from '../../types'
 
 const PROJECTS: ShowcaseProject[] = [
   {
-    title: 'ESP32 Filament Dryer Controller',
+    title: 'Home Infrastructure & IoT Automation Hub',
     description:
-      'A closed-loop dryer built around an ESP32, a PID-tuned heater, and a WebSocket dashboard for live humidity/temp readouts.',
-    tags: ['ESP32', 'I2C', 'WebSockets'],
-    repoUrl: '#',
-    demoUrl: '#',
+      'Self-hosted containerized server infrastructure managing network-wide ad blocking via Pi-hole, smart home automation with Home Assistant, and local network storage.',
+    tags: ['Docker', 'Home Assistant', 'Pi-hole', 'UGREEN NASync (UGOS)', 'Linux'],
+    repoUrl: 'https://github.com/bhardwaj-anuj64/New-Portfolio',
   },
   {
-    title: 'Home Assistant Relay Board',
+    title: 'Real-Time ESP32 Split-Flap Display',
     description:
-      'A custom relay PCB that brings three dumb circuits in the garage under Home Assistant, replacing a tangle of smart plugs.',
-    tags: ['KiCad', 'Home Assistant', 'Docker'],
-    repoUrl: '#',
-    demoUrl: '#',
+      'Wi-Fi-connected split-flap display driven by an ESP32 using WebSockets for dynamic message rendering, countdowns, and real-time clock synchronization.',
+    tags: ['ESP32', 'C++/Arduino', 'WebSockets', 'HTML/CSS/JS', 'Custom PCB'],
   },
   {
-    title: 'CoreXY 3D Printer Build',
+    title: 'Practical CAD & Technical 3D Printing Pipeline',
     description:
-      'A from-scratch CoreXY frame with TMC2209 drivers tuned for near-silent operation, designed and iterated in Onshape.',
-    tags: ['Onshape', 'TMC2209', 'FDM'],
-    repoUrl: '#',
-    demoUrl: '#',
+      'End-to-end design and manufacturing of practical, functional components — including custom interior parts installed and in use on an E46 project vehicle.',
+    tags: ['Onshape CAD', 'Orca Slicer', 'FDM 3D Printing', 'PAHT-CF', 'Nylon'],
+    repoUrl: 'https://github.com/bhardwaj-anuj64/portfolio-microservices',
   },
 ]
 

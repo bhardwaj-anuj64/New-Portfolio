@@ -12,10 +12,10 @@ Revisit this in full during the "content filling" pass, before going live.
 
 ## Placeholder links (all currently `href="#"`)
 
-- [ ] `Hero.tsx` — GitHub, X, Bluesky, Discord social icons.
-- [ ] `ContactSection.tsx` — GitHub, LinkedIn, X, Bluesky, Discord social icons.
-- [ ] `ProjectShowcase.tsx` — repo/demo links for all 3 professional projects.
-- [ ] `MakerProjects.tsx` — repo/demo links for all 3 tinkering projects.
+- [x] `Hero.tsx` — GitHub + Instagram (no X/Bluesky/Discord accounts exist, icons dropped).
+- [x] `ContactSection.tsx` — GitHub, LinkedIn + Instagram (no X/Bluesky/Discord accounts exist, icons dropped).
+- [x] `ProjectShowcase.tsx` — no repo/demo links; all 3 professional projects are enterprise work that can't be shared publicly. `repoUrl`/`demoUrl` made optional on `ShowcaseProject` and `TiltProjectCard` now hides the row entirely when both are absent.
+- [x] `MakerProjects.tsx` — Home Infrastructure & IoT Automation Hub → this repo (github.com/bhardwaj-anuj64/New-Portfolio, now public); Practical CAD & Technical 3D Printing Pipeline → github.com/bhardwaj-anuj64/portfolio-microservices (split out of this repo with `git filter-repo`, full history preserved, now public); Real-Time ESP32 Split-Flap Display has no repo (no code lives here), left without a link.
 - [x] `Hero.tsx` (`ProfileRing`) — real headshot in at `frontend/public/profile.webp`.
 - [x] `Hero.tsx` — real resume in at `frontend/public/resume.pdf`.
 
@@ -23,12 +23,12 @@ Revisit this in full during the "content filling" pass, before going live.
 
 Everything below reads as specific, plausible professional content, but it was written as placeholder sample copy, not sourced from you. This is the biggest launch risk in the list — it's the difference between "unstyled" and "actively making claims that aren't true":
 
-- [ ] `QualificationsSection.tsx` — all 4 timeline entries (B.S. Computer Science / UT Austin, Azure Fundamentals, Azure Developer Associate, Certified Kubernetes Administrator) are invented, not your real degree/certs.
-- [ ] `ProjectShowcase.tsx` — all 3 "Professional System Architecture" projects (Claims Processing Platform, Inventory Sync Service, Internal Deploy Console) are invented.
-- [ ] `MakerProjects.tsx` — all 3 tinkering projects (ESP32 Filament Dryer Controller, Home Assistant Relay Board, CoreXY 3D Printer Build) are invented.
-- [ ] `AboutBio.tsx` — bio paragraphs and "Recent Engineering Focus" text are invented.
-- [ ] `RoleBadge.tsx` — rotating titles ("Application Development Analyst", "Full-Stack Engineer", "Hardware & Systems Tinkerer") — confirm these are your real titles, or replace.
-- [ ] `ProfessionalSkills.tsx` / `TinkeringSkills.tsx` — the "Impact & Achievement" / "Build Notes" expandable blurbs under each skill chip are invented anecdotes.
+- [x] `QualificationsSection.tsx` — real entries now: B.Tech CS (RIMT University, 2020), M.S. CS (University of Florida, 2023), Azure Fundamentals AZ-900 (Microsoft, 2023).
+- [x] `ProjectShowcase.tsx` — real professional highlights: Common SharePoint File Upload Service, Enterprise Common Library & App Support, CI/CD Pipeline Automation & Copilot Workflows. Repo/demo links still `#` (tracked above).
+- [x] `MakerProjects.tsx` — real tinkering projects: Home Infrastructure & IoT Automation Hub, Real-Time ESP32 Split-Flap Display, Practical CAD & Technical 3D Printing Pipeline. Repo/demo links still `#` (tracked above).
+- [x] `AboutBio.tsx` — bio and "Recent Engineering Focus" now reflect real background; "Based in Austin, TX" confirmed accurate.
+- [x] `RoleBadge.tsx` — confirmed real: "Application Development Analyst", "Full-Stack Engineer", "Hardware & Systems Tinkerer".
+- [x] `ProfessionalSkills.tsx` / `TinkeringSkills.tsx` — skill chip blurbs rewritten off real project content (no fabricated metrics); TMC2209/resin-printing/TrueNAS-cluster claims removed, replaced with the actual UGREEN NASync setup.
 
 ## Mock backend data (presented as live, isn't)
 
@@ -38,10 +38,10 @@ Everything below reads as specific, plausible professional content, but it was w
 
 ## Microservice Playground — real backbone
 
-`portfolio-microservices/tools-service/` is a single FastAPI/OpenCV container hosting three logically distinct backends — Segmentation & Outline, Tonal-Banding/Depth, and Mesh Generator — consolidated into one container because the homelab VM (2 vCPU / 3GB RAM, already running the Gateway, frontend, and cloudflared) doesn't have the headroom for three separate Python runtimes that won't scale independently. Full architecture writeup, endpoint reference, frontend flow design, and known bugs/learnings live in `portfolio-microservices/knowledge/`.
+`portfolio-microservices/tools-service/` (now its own repo: [bhardwaj-anuj64/portfolio-microservices](https://github.com/bhardwaj-anuj64/portfolio-microservices), split out of this one with `git filter-repo`, full history preserved) is a single FastAPI/OpenCV container hosting three logically distinct backends — Segmentation & Outline, Tonal-Banding/Depth, and Mesh Generator — consolidated into one container because the homelab VM (2 vCPU / 3GB RAM, already running the Gateway, frontend, and cloudflared) doesn't have the headroom for three separate Python runtimes that won't scale independently. Full architecture writeup, endpoint reference, frontend flow design, and known bugs/learnings live in that repo's `knowledge/`.
 
-- [x] Containerized (`Dockerfile`), wired into `docker-compose.yml`/`docker-compose.prod.yml` as an internal-only `tools` service, built/pushed in CI (`.github/workflows/deploy.yml`), and reachable from the Gateway via `ToolsProxyController` (`/api/tools/**`).
-- [x] **Tool Tracer** — real, gridfinity-organizer path only (`frontend/src/components/tools/tooltracer/`). Full flow: 4-corner calibration → magic-wand segmentation with a live mask preview → island review → per-tool pocket depth → mesh preview (watertight-checked) → STL/DXF export. Replaces the old `DxfTool.tsx` ("DXF Contour Tracer") in the Microservice Playground. "Individual holder" and G-code output types are shown disabled/"coming soon" in the UI rather than silently missing — neither is designed yet (`portfolio-microservices/knowledge/05-open-items.md`).
+- [x] Containerized (`Dockerfile`), built/pushed by that repo's own CI (`.github/workflows/publish.yml`) to `ghcr.io/bhardwaj-anuj64/portfolio-microservices/tools`, pulled into this repo's `docker-compose.yml`/`docker-compose.prod.yml` as an internal-only `tools` service (versioned independently via `TOOLS_IMAGE_TAG`, decoupled from this repo's `sha_tag`), and reachable from the Gateway via `ToolsProxyController` (`/api/tools/**`).
+- [x] **Tool Tracer** — real, gridfinity-organizer path only (`frontend/src/components/tools/tooltracer/`). Full flow: 4-corner calibration → magic-wand segmentation with a live mask preview → island review → per-tool pocket depth → mesh preview (watertight-checked) → STL/DXF export. Replaces the old `DxfTool.tsx` ("DXF Contour Tracer") in the Microservice Playground. "Individual holder" and G-code output types are shown disabled/"coming soon" in the UI rather than silently missing — neither is designed yet (see that repo's `knowledge/05-open-items.md`).
 - [ ] **Keychain Holder** — end-to-end working (`frontend/src/components/tools/keychain/`, still named `KeychainGenerator.tsx`/`KeychainGenerator()` internally), but not print-accurate yet. A wall-mounted plaque, not a personal keychain tag: grabcut segmentation (bbox + fg/bg scribbles, live preview) → tonal-band relief (live preview) → assembly (thin raised picture-frame rim, adjustable rim/bar height, on/off light-box, hanger bar with adjustable pilot-hole count/diameter) → watertight-checked mesh preview → STL/DXF export. Backed by `build_holder_mask_and_depth` in `mesh_builder.py` and `POST /mesh/from_silhouette`. Verified live end-to-end against a local dev stack 2026-09-16 (full request chain returns 200, watertight mesh) — but real issues flagged from that test, still open:
   - Real-world sizing is off — `TARGET_SIZE_MM`/`px_per_mm` scaling needs a pass against actual print output, not just internal mm-consistency.
   - The mounting holes are plain cylinders — no thread geometry, so they only work as self-tap pilot holes for a soft-metal screw, not for a real machine-thread insert.

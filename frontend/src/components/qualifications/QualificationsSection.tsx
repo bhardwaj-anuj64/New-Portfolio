@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Cloud, GraduationCap, Network, Workflow } from 'lucide-react'
+import { Cloud, GraduationCap } from 'lucide-react'
 import { useState } from 'react'
 import { FadeSection } from '../common/FadeSection'
 import { GlassCard } from '../common/GlassCard'
@@ -8,47 +8,34 @@ import type { QualificationMilestone } from '../../types'
 
 const MILESTONES: QualificationMilestone[] = [
   {
-    id: 'bs-cs',
+    id: 'btech-cs',
     type: 'degree',
-    title: 'B.S. in Computer Science',
-    institution: 'University of Texas at Austin',
-    date: 'May 2021',
+    title: 'B.Tech in Computer Science',
+    institution: 'RIMT University, Mandi Gobindgarh, Punjab',
+    date: '2020',
     icon: GraduationCap,
-    details:
-      'Coursework spanning data structures, distributed systems, and databases, capped by a senior project building a distributed job scheduler in C#.',
-    skills: ['Data Structures', 'Algorithms', 'Databases', 'Systems Programming'],
+    details: 'Undergraduate degree in Computer Science.',
+    skills: ['Computer Science', 'Software Engineering'],
+  },
+  {
+    id: 'ms-cs',
+    type: 'degree',
+    title: 'M.S. in Computer Science',
+    institution: 'University of Florida',
+    date: '2023',
+    icon: GraduationCap,
+    details: 'Graduate degree in Computer Science.',
+    skills: ['Computer Science', 'Software Engineering'],
   },
   {
     id: 'az-900',
     type: 'certification',
-    title: 'Microsoft Certified: Azure Fundamentals',
+    title: 'Microsoft Certified: Azure Fundamentals (AZ-900)',
     institution: 'Microsoft',
-    date: 'Jan 2022',
+    date: '2023',
     icon: Cloud,
-    details:
-      'Foundational certification covering core Azure services, pricing, and governance — the on-ramp before going deep on the developer track.',
-    skills: ['Azure', 'Cloud Fundamentals', 'Governance'],
-  },
-  {
-    id: 'az-204',
-    type: 'certification',
-    title: 'Microsoft Certified: Azure Developer Associate',
-    institution: 'Microsoft',
-    date: 'Sep 2023',
-    icon: Workflow,
-    details:
-      'Validated hands-on experience designing, building, and maintaining cloud applications and services on Azure — Functions, App Service, and Cosmos DB.',
-    skills: ['Azure Functions', 'App Service', 'Cosmos DB', 'Azure DevOps'],
-  },
-  {
-    id: 'cka',
-    type: 'certification',
-    title: 'Certified Kubernetes Administrator',
-    institution: 'The Linux Foundation',
-    date: 'Mar 2024',
-    icon: Network,
-    details: 'Hands-on cluster administration exam covering cluster setup, workloads, networking, and troubleshooting.',
-    skills: ['Kubernetes', 'k3s', 'Container Orchestration', 'Networking'],
+    details: 'Foundational certification covering core Azure services, pricing, and governance.',
+    skills: ['Azure', 'Cloud Fundamentals'],
   },
 ]
 

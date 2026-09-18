@@ -37,15 +37,12 @@ backend/Gateway/
   Controllers/        one controller per feature area (see API overview below)
   Services/           business logic behind each controller (analytics, email, push)
   Models/              request/response DTOs
-portfolio-microservices/
-  tools-service/      FastAPI + OpenCV, one container: segmentation, tonal-banding, mesh generation
-  knowledge/            architecture writeup, endpoint reference, frontend flow design, known bugs
-docker-compose.yml         local dev / builds images from source
+docker-compose.yml         local dev / builds gateway+frontend from source, pulls the tools image
 docker-compose.prod.yml    production — pulls versioned images from GHCR
 .github/workflows/deploy.yml
 ```
 
-`portfolio-microservices/tools-service/` is the shared backbone for the "Microservice Playground" demos — Keychain Holder and Tool Tracer (Mesh Generator is shared infra, not a demo of its own) — reachable from the Gateway at `/api/tools/**`. See [LAUNCH_CHECKLIST.md](./LAUNCH_CHECKLIST.md) for what's wired vs. still mocked, and `portfolio-microservices/knowledge/` for the full design.
+The "Microservice Playground" demos — Keychain Holder and Tool Tracer (Mesh Generator is shared infra, not a demo of its own) — are backed by a FastAPI + OpenCV service living in a separate repo, [portfolio-microservices](https://github.com/bhardwaj-anuj64/portfolio-microservices), reachable from the Gateway at `/api/tools/**`. See [LAUNCH_CHECKLIST.md](./LAUNCH_CHECKLIST.md) for what's wired vs. still mocked, and that repo's `knowledge/` folder for the full design.
 
 ## Getting started (local dev)
 

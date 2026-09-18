@@ -39,24 +39,30 @@ export function TiltProjectCard({ project }: { project: ShowcaseProject }) {
           </span>
         ))}
       </div>
-      <div className="mt-1 flex gap-4 text-sm text-white/70">
-        <a
-          href={project.repoUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1.5 transition-colors hover:text-white"
-        >
-          <GitBranch className="h-4 w-4" /> Repo
-        </a>
-        <a
-          href={project.demoUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1.5 transition-colors hover:text-white"
-        >
-          <ExternalLink className="h-4 w-4" /> Live Demo
-        </a>
-      </div>
+      {(project.repoUrl || project.demoUrl) && (
+        <div className="mt-1 flex gap-4 text-sm text-white/70">
+          {project.repoUrl && (
+            <a
+              href={project.repoUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 transition-colors hover:text-white"
+            >
+              <GitBranch className="h-4 w-4" /> Repo
+            </a>
+          )}
+          {project.demoUrl && (
+            <a
+              href={project.demoUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 transition-colors hover:text-white"
+            >
+              <ExternalLink className="h-4 w-4" /> Live Demo
+            </a>
+          )}
+        </div>
+      )}
     </motion.div>
   )
 }

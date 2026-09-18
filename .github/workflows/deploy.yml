@@ -110,25 +110,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Tools image metadata
-        id: meta-tools
-        uses: docker/metadata-action@v6
-        with:
-          images: ghcr.io/${{ steps.vars.outputs.namespace }}/tools
-          tags: |
-            type=raw,value=latest
-            type=raw,value=${{ steps.vars.outputs.sha_tag }}
-
-      - name: Build and push tools image
-        uses: docker/build-push-action@v7
-        with:
-          context: ./portfolio-microservices/tools-service
-          push: true
-          tags: ${{ steps.meta-tools.outputs.tags }}
-          labels: ${{ steps.meta-tools.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
   # Runs on a self-hosted runner living on the home server itself (registered there, not
   # reachable from GitHub's cloud runners — the server sits behind NAT with no port forward).
   # The runner polls GitHub outbound, so no inbound access or SSH secrets are needed.

@@ -27,10 +27,12 @@ services:
     restart: unless-stopped
 
   # Segmentation, tonal-banding, and mesh-generation, consolidated into one
-  # container (see portfolio-microservices/knowledge/) — internal only, the
-  # Gateway is the only thing that talks to it.
+  # container (see github.com/bhardwaj-anuj64/portfolio-microservices/knowledge/) —
+  # internal only, the Gateway is the only thing that talks to it. Built and published
+  # by that repo's own CI, not this one — versioned independently, so it isn't pinned
+  # to this deploy's sha_tag the way gateway/frontend are.
   tools:
-    image: ghcr.io/${GHCR_NAMESPACE}/tools:${IMAGE_TAG:-latest}
+    image: ghcr.io/bhardwaj-anuj64/portfolio-microservices/tools:${TOOLS_IMAGE_TAG:-latest}
     networks:
       - portfolio-network
     restart: unless-stopped

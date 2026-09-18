@@ -136,11 +136,8 @@ export function Hero() {
           transition={{ duration: 0.5, delay: 0.4 }}
           className="pointer-events-auto flex items-center gap-3"
         >
-          {/* TODO: swap placeholder hrefs for real profile URLs */}
-          <SocialLink href="#" label="GitHub" iconId="github-icon" />
-          <SocialLink href="#" label="X" iconId="x-icon" />
-          <SocialLink href="#" label="Bluesky" iconId="bluesky-icon" />
-          <SocialLink href="#" label="Discord" iconId="discord-icon" />
+          <SocialLink href="https://github.com/bhardwaj-anuj64" label="GitHub" iconId="github-icon" />
+          <SocialLink href="https://www.instagram.com/anuj.bhardwaj64" label="Instagram" iconId="instagram-icon" />
         </motion.div>
       </div>
 

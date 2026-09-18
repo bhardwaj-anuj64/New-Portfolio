@@ -120,7 +120,8 @@ export const getAnalyticsStats = (token: string) =>
     return res.json() as Promise<AnalyticsStatsResponse>
   })
 
-// Tool Tracer — proxied through the Gateway to portfolio-microservices/tools-service.
+// Tool Tracer — proxied through the Gateway to the tools-service in the separate
+// portfolio-microservices repo (github.com/bhardwaj-anuj64/portfolio-microservices).
 // Request/response bodies stay snake_case (see types/index.ts) to match that service's wire
 // format directly, rather than translating a byte-for-byte forwarding proxy's JSON.
 

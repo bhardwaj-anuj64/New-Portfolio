@@ -28,8 +28,8 @@ export interface ShowcaseProject {
   title: string
   description: string
   tags: string[]
-  repoUrl: string
-  demoUrl: string
+  repoUrl?: string
+  demoUrl?: string
 }
 
 export interface TinkeringSkill {

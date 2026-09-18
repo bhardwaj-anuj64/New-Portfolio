@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronDown, Code, Database, Layers, Sparkles, Table2, Workflow, X } from 'lucide-react'
+import { ChevronDown, Code, Database, Layers, Sparkles, Terminal, Workflow, X } from 'lucide-react'
 import { useState } from 'react'
 import { GravityMeshCanvas } from './GravityMeshCanvas'
 import type { EnterpriseSkill } from '../../types'
@@ -9,37 +9,34 @@ const SKILLS: EnterpriseSkill[] = [
     icon: Code,
     name: 'C#',
     impact:
-      'Replaced reflection-heavy DTO mapping in a multi-tenant service with source-generated mappers, cutting request latency 35%.',
+      'Built reusable enterprise services like the Common SharePoint File Upload Service, standardizing document handling across platforms.',
   },
   {
     icon: Layers,
     name: '.NET',
     impact:
-      'Consolidated three legacy services into a single .NET 8 Web API, shrinking the deployment surface and infra cost by ~40%.',
+      'Maintains and expands shared internal library packages while delivering ongoing support for legacy enterprise applications.',
   },
   {
     icon: Database,
-    name: 'Microsoft SQL Server',
-    impact:
-      'Rewrote a set of slow enterprise reporting queries with proper indexing and execution-plan analysis, dropping a 12s report to under 400ms.',
-  },
-  {
-    icon: Table2,
-    name: 'MySQL',
-    impact:
-      'Diagnosed a replication lag issue on a production MySQL cluster under peak load, restoring sub-second read consistency.',
+    name: 'SQL',
+    impact: 'Works with relational databases backing enterprise applications and internal tools.',
   },
   {
     icon: Sparkles,
     name: 'GitHub Copilot',
-    impact:
-      'Rolled out Copilot across the engineering team alongside updated review standards, cutting average PR turnaround time by 20%.',
+    impact: 'Set standards for Copilot usage across enterprise development workflows.',
   },
   {
     icon: Workflow,
     name: 'Azure DevOps (CI/CD)',
     impact:
-      'Built multi-stage Azure DevOps pipelines with automated test gates and blue-green deploys, cutting release cycle time from days to under an hour.',
+      'Built custom pre-build scripts and Azure DevOps MCP server integrations to optimize CI/CD pipelines.',
+  },
+  {
+    icon: Terminal,
+    name: 'PowerShell',
+    impact: 'Automates build pipelines and developer tooling to drive standardized developer productivity.',
   },
 ]
 

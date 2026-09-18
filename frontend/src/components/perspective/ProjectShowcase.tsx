@@ -3,28 +3,22 @@ import type { ShowcaseProject } from '../../types'
 
 const PROJECTS: ShowcaseProject[] = [
   {
-    title: 'Claims Processing Platform',
+    title: 'Common SharePoint File Upload Service',
     description:
-      'A .NET 8 microservice suite that automated manual insurance claims intake, cutting average processing time from 3 days to under 4 hours.',
-    tags: ['.NET 8', 'SQL Server', 'Azure DevOps'],
-    repoUrl: '#',
-    demoUrl: '#',
+      'A reusable service for seamless file uploading across enterprise platforms, standardizing document handling.',
+    tags: ['C#', '.NET', 'SharePoint API', 'Azure DevOps'],
   },
   {
-    title: 'Inventory Sync Service',
+    title: 'Enterprise Common Library & App Support',
     description:
-      'A MySQL-backed reconciliation service keeping warehouse and storefront inventory in lockstep across 40+ retail locations.',
-    tags: ['C#', 'MySQL', 'CI/CD'],
-    repoUrl: '#',
-    demoUrl: '#',
+      'Maintained and expanded shared internal library packages while delivering critical enhancements and ongoing support for legacy enterprise applications.',
+    tags: ['C#', 'ASP.NET', '.NET Framework', 'SQL', 'Azure DevOps'],
   },
   {
-    title: 'Internal Deploy Console',
+    title: 'CI/CD Pipeline Automation & Copilot Workflows',
     description:
-      'A self-service release dashboard wrapping Azure DevOps pipelines, giving non-engineers a safe one-click path to production.',
-    tags: ['.NET', 'Azure DevOps', 'GitHub Copilot'],
-    repoUrl: '#',
-    demoUrl: '#',
+      'Custom pre-build scripts and Azure DevOps MCP server integrations to optimize CI/CD pipelines and drive standardized developer productivity.',
+    tags: ['Azure DevOps', 'GitHub Copilot', 'C#', 'PowerShell'],
   },
 ]
 

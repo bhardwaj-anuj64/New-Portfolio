@@ -19,11 +19,11 @@ services:
       - portfolio-network
 
   # Segmentation, tonal-banding, and mesh-generation, consolidated into one
-  # container (see portfolio-microservices/knowledge/) — internal only, the
-  # Gateway is the only thing that talks to it.
+  # container (see github.com/bhardwaj-anuj64/portfolio-microservices/knowledge/) —
+  # internal only, the Gateway is the only thing that talks to it. Built and published
+  # by that repo's own CI, not this one — pulled as an image rather than built locally.
   tools:
-    build:
-      context: ./portfolio-microservices/tools-service
+    image: ghcr.io/bhardwaj-anuj64/portfolio-microservices/tools:${TOOLS_IMAGE_TAG:-latest}
     networks:
       - portfolio-network
 
